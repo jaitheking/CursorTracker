@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cursor Performance Tracker - Jaiprashanth</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --border-color: #e1e4e8;
+            --text-color: #24292e;
+            --primary-color: #ff5722; /* Vibrant Energy Orange */
+            --accent-color: #00cfb4;  /* High-Performance Teal */
+            --success-color: #2ea44f;
+            --shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 1.4rem;
+            color: var(--primary-color);
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: #6a737d;
+            margin-top: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-top: 16px;
+            margin-bottom: 6px;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: all 0.2s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.15);
+        }
+
+        .preset-container {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            background: #eef2f7;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #4b5563;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .preset-btn:active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        button.main-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary-color), #ff7043);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 24px;
+            box-shadow: 0 4px 10px rgba(255, 87, 34, 0.3);
+            transition: transform 0.1s;
+        }
+
+        button.main-btn:active {
+            transform: scale(0.98);
+        }
+
+        button.secondary {
+            background: transparent;
+            border: 2px solid var(--accent-color);
+            color: var(--accent-color);
+            margin-top: 12px;
+            font-weight: bold;
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        #output {
+            background: #f8f9fa;
+            border: 2px dashed var(--border-color);
+            padding: 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            margin-top: 20px;
+            color: #24292e;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>⚡ CURSOR PERFORMANCE</h2>
+        <div class="subtitle">Athlete: Jaiprashanth</div>
+    </div>
+
+    <form id="logForm">
+        <label for="logDate">Workout Date</label>
+        <input type="date" id="logDate" required>
+
+        <label for="workoutType">Workout Type</label>
+        <select id="workoutType" onchange="toggleFields()">
+            <option value="Running">🏃‍♂️ Running Session</option>
+            <option value="Gym">🏋️‍♂️ Gym / Strength</option>
+        </select>
+
+        <!-- Running Specific -->
+        <div id="runningMetrics">
+            <label for="runDist">Distance (km)</label>
+            <input type="number" id="runDist" step="0.01" placeholder="e.g., 10.00">
+            <div class="preset-container">
+                <button type="button" class="preset-btn" onclick="setDist(5)">5k</button>
+                <button type="button" class="preset-btn" onclick="setDist(10)">10k</button>
+                <button type="button" class="preset-btn" onclick="setDist(12)">12k</button>
+                <button type="button" class="preset-btn" onclick="setDist(15)">15k</button>
+                <button type="button" class="preset-btn" onclick="setDist(21.1)">HM</button>
+            </div>
+
+            <label for="avgPace">Average Pace (/km)</label>
+            <input type="text" id="avgPace" placeholder="e.g., 6:56">
+            <div class="preset-container">
+                <button type="button" class="preset-btn" onclick="setPace('6:56')">6:56 (Baseline)</button>
+                <button type="button" class="preset-btn" onclick="setPace('6:30')">6:30</button>
+                <button type="button" class="preset-btn" onclick="setPace('6:00')">6:00</button>
+            </div>
+        </div>
+
+        <!-- Gym Specific -->
+        <div id="gymMetrics" class="hidden">
+            <label for="gymFocus">Focus / Split</label>
+            <input type="text" id="gymFocus" placeholder="e.g., Lower Body, Core">
+            <div class="preset-container">
+                <button type="button" class="preset-btn" onclick="setGym('Lower Body & Stability')">Lower Body</button>
+                <button type="button" class="preset-btn" onclick="setGym('Upper Body & Core')">Upper Body</button>
+                <button type="button" class="preset-btn" onclick="setGym('Full Body Kinetic')">Full Body</button>
+            </div>
+        </div>
+
+        <label>Body Composition</label>
+        <div class="grid-3">
+            <input type="number" id="weight" step="0.1" placeholder="Wt (kg)">
+            <input type="number" id="muscle" step="0.1" placeholder="Musc (kg)">
+            <input type="number" id="bf" step="0.1" placeholder="BF %">
+        </div>
+
+        <label for="description">Workout Details / Reps</label>
+        <textarea id="description" rows="3" placeholder="Interval details, weight lifted, etc..."></textarea>
+
+        <label for="comments">Condition & Comments</label>
+        <textarea id="comments" rows="2" placeholder="Body feel, energy levels, sleep quality..."></textarea>
+
+        <button type="button" class="main-btn" onclick="generateSummary()">Generate Log</button>
+        <button type="button" class="secondary hidden" id="copyBtn" onclick="copyToClipboard()">🚀 Copy to Clipboard</button>
+    </form>
+
+    <div id="output" class="hidden"></div>
+</div>
+
+<script>
+    document.getElementById('logDate').valueAsDate = new Date();
+
+    function setDist(val) { document.getElementById('runDist').value = val; }
+    function setPace(val) { document.getElementById('avgPace').value = val; }
+    function setGym(val) { document.getElementById('gymFocus').value = val; }
+
+    function toggleFields() {
+        const type = document.getElementById('workoutType').value;
+        if (type === 'Running') {
+            document.getElementById('runningMetrics').classList.remove('hidden');
+            document.getElementById('gymMetrics').classList.add('hidden');
+        } else {
+            document.getElementById('runningMetrics').classList.add('hidden');
+            document.getElementById('gymMetrics').classList.remove('hidden');
+        }
+    }
+
+    function generateSummary() {
+        const date = document.getElementById('logDate').value;
+        const type = document.getElementById('workoutType').value;
+        const weight = document.getElementById('weight').value;
+        const muscle = document.getElementById('muscle').value;
+        const bf = document.getElementById('bf').value;
+        const desc = document.getElementById('description').value.trim();
+        const comments = document.getElementById('comments').value.trim();
+
+        let summary = `📊 **WORKOUT LOG: ${date}**\n`;
+        summary += `🔹 **Type:** ${type}\n`;
+
+        if (type === 'Running') {
+            const dist = document.getElementById('runDist').value;
+            const pace = document.getElementById('avgPace').value;
+            if (dist) summary += `🏃‍♂️ **Distance:** ${dist} km\n`;
+            if (pace) summary += `⏱️ **Average Pace:** ${pace} /km\n`;
+        } else {
+            const focus = document.getElementById('gymFocus').value;
+            if (focus) summary += `💪 **Focus:** ${focus}\n`;
+        }
+
+        if (weight || muscle || bf) {
+            summary += `\n⚖️ **Body Composition:**\n`;
+            if (weight) summary += `   • Weight: ${weight} kg\n`;
+            if (muscle) summary += `   • Muscle Mass: ${muscle} kg\n`;
+            if (bf)     summary += `   • Body Fat: ${bf}%\n`;
+        }
+
+        if (desc) summary += `\n📝 **Details:**\n${desc}\n`;
+        if (comments) summary += `\n⚠️ **Condition/Context:**\n${comments}\n`;
+
+        const outputDiv = document.getElementById('output');
+        const copyBtn = document.getElementById('copyBtn');
+        
+        outputDiv.innerText = summary;
+        outputDiv.classList.remove('hidden');
+        copyBtn.classList.remove('hidden');
+    }
+
+    function copyToClipboard() {
+        const text = document.getElementById('output').innerText;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(showSuccess).catch(fallbackCopy);
+        } else {
+            fallbackCopy(text);
+        }
+
+        function fallbackCopy(textFallback) {
+            const textArea = document.createElement("textarea");
+            textArea.value = typeof textFallback === 'string' ? textFallback : text;
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showSuccess();
+            } catch (err) {
+                alert('Copy failed. Please manually copy text.');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function showSuccess() {
+            const copyBtn = document.getElementById('copyBtn');
+            copyBtn.innerText = '🔥 Log Copied!';
+            copyBtn.style.background = 'var(--success-color)';
+            copyBtn.style.color = '#fff';
+            setTimeout(() => {
+                copyBtn.innerText = '🚀 Copy to Clipboard';
+                copyBtn.style.background = 'transparent';
+                copyBtn.style.color = 'var(--accent-color)';
+            }, 1500);
+        }
+    }
+</script>
+
+</body>
+</html>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff5722">
+
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(reg => console.log('Service Worker registered successfully!', reg))
+                .catch(err => console.log('Service Worker registration failed:', err));
+        });
+    }
+</script>

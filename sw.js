@@ -1,8 +1,10 @@
-const CACHE_NAME = 'cursor-tracker-v1';
+const CACHE_NAME = 'cursor-tracker-v2';
 const ASSETS = [
   '/',
   '/index.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/assets/icon-192.svg',
+  '/assets/icon-512.svg'
 ];
 
 // Install Service Worker and cache app assets

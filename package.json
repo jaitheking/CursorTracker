@@ -1,0 +1,14 @@
+{
+  "name": "cursor-performance-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "servor --browse",
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "devDependencies": {
+    "servor": "^4.0.2",
+    "typescript": "^5.0.0"
+  }
+}

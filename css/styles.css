@@ -1,0 +1,189 @@
+:root {
+    --bg-color: #f4f6f9;
+    --card-bg: #ffffff;
+    --border-color: #e1e4e8;
+    --text-color: #24292e;
+    --primary-color: #ff5722; /* Vibrant Energy Orange */
+    --accent-color: #00cfb4;  /* High-Performance Teal */
+    --success-color: #2ea44f;
+    --shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 16px;
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 480px;
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+    box-sizing: border-box;
+}
+
+.header {
+    text-align: center;
+    border-bottom: 2px solid var(--bg-color);
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+}
+
+h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: var(--primary-color);
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.subtitle {
+    font-size: 0.85rem;
+    color: #6a737d;
+    margin-top: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-top: 16px;
+    margin-bottom: 6px;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: 1rem;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.15);
+}
+
+.preset-container {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.preset-btn {
+    background: #eef2f7;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.1s;
+}
+
+.preset-btn:active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.hidden {
+    display: none;
+}
+
+button.main-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--primary-color), #ff7043);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 24px;
+    box-shadow: 0 4px 10px rgba(255, 87, 34, 0.3);
+    transition: transform 0.1s;
+}
+
+button.main-btn:active {
+    transform: scale(0.98);
+}
+
+.action-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+button.secondary {
+    background: transparent;
+    border: 2px solid var(--accent-color);
+    color: var(--accent-color);
+    font-weight: bold;
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+#output {
+    background: #f8f9fa;
+    border: 2px dashed var(--border-color);
+    padding: 16px;
+    border-radius: 8px;
+    font-family: monospace;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+    margin-top: 20px;
+    color: #24292e;
+}
+
+/* Polished Footer Integration Styles */
+.app-footer {
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.app-footer p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #6a737d;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.app-footer strong {
+    color: var(--text-color);
+    font-weight: 700;
+}

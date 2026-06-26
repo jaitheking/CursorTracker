@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Production / Compiled Output
+# This ignores the compiled app.js map so you track only your source TypeScript file.
+# NOTE: If you are relying on Vercel to look at your pre-compiled scripts/app.js directly, 
+# you can comment out the line below by adding a '#'. However, once we add a build step or dev server,
+# it is best practice to ignore compiled files.
+scripts/app.js
+
+# TypeScript / Build Caches
+*.tsbuildinfo
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment Variables / Local Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel Deployment Metadata
+.vercel
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDEs / Editors Caches
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

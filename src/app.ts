@@ -269,3 +269,19 @@ function showSuccess(): void {
         copyBtn.style.color = 'var(--accent-color)';
     }, 1500);
 }
+
+// Append this small sequence into your file download or clip tracking pipeline in src/app.ts:
+function saveToHistoryLogs(date: string, type: string, summaryText: string): void {
+    const rawHistory = localStorage.getItem('cursor_workout_history');
+    const logs = rawHistory ? JSON.parse(rawHistory) : [];
+    
+    const newLog = {
+        id: Date.now().toString(),
+        date: date,
+        type: type,
+        summary: summaryText.replace(/📊 \*\*WORKOUT LOG: .*\*\n/, '') // Strip duplicate titles
+    };
+    
+    logs.push(newLog);
+    localStorage.setItem('cursor_workout_history', JSON.stringify(logs));
+}

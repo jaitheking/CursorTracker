@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout History Dashboard - Jaiprashanth</title>
+    
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#ff5722">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h2>📊 PERFORMANCE HISTORY</h2>
+        <div class="subtitle">Athlete: Jaiprashanth</div>
+    </div>
+
+    <a href="/index.html" class="nav-link">⬅️ Back to Workout Logger</a>
+
+    <div class="import-zone">
+        <label for="fileImporter" class="import-label">📥 Sync Older Logs from Phone Folder</label>
+        <input type="file" id="fileImporter" accept=".txt" multiple style="display: none;">
+        <button type="button" class="secondary-btn" onclick="document.getElementById('fileImporter').click()">Select Log Files</button>
+        <span id="importStatus" class="import-status"></span>
+    </div>
+
+    <div class="history-section">
+        <div id="historyLogList" class="history-list">
+            <p class="empty-state">No previous logs saved on this device yet.</p>
+        </div>
+        
+        <button type="button" id="clearHistoryBtn" class="danger-btn hidden">🗑️ Wipe History Cache</button>
+    </div>
+
+    <footer class="app-footer">
+        <p>© <span id="currentYear"></span> · Developed with ⚡ by <strong>Jaiprashanth</strong></p>
+    </footer>
+</div>
+
+<script src="/scripts/history.js" defer></script>
+<script src="/scripts/sw-register.js" defer></script>
+</body>
+</html>

@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', (): void => {
 
     initializeSegmentTabs();
     initializePeriodControls();
-    
+
     // Core computation pass
     calculatePerformanceAnalytics();
 });
@@ -30,7 +30,7 @@ function initializeSegmentTabs(): void {
     btnRun?.addEventListener('click', () => {
         btnRun.classList.add('active');
         btnGym?.classList.remove('active');
-        
+
         if (panelRun && panelGym) {
             panelRun.classList.remove('hidden');
             panelGym.classList.add('hidden');
@@ -40,7 +40,7 @@ function initializeSegmentTabs(): void {
     btnGym?.addEventListener('click', () => {
         btnGym.classList.add('active');
         btnRun?.classList.remove('active');
-        
+
         if (panelRun && panelGym) {
             panelGym.classList.remove('hidden');
             panelRun.classList.add('hidden');
@@ -61,6 +61,29 @@ function initializePeriodControls(): void {
 }
 
 /**
+ * Sanitizes older, mixed-format historical logs into a perfectly predictable 
+ * structural syntax for reliable, crash-free downstream dashboard parsing.
+ */
+function sanitizeRawLogDashboardSummary(text: string): string {
+    if (!text) return "";
+    
+    return text
+        // 1. Strip mobile line carriage returns (\r) and trailing whitespaces
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        
+        // 2. Clear out markdown bolding elements (**) that break regex limits
+        .replace(/\*\*/g, '')
+        
+        // 3. Normalize common label variations to unified dashboard standards
+        .replace(/Avg\s*Pace:/i, 'Average Pace:')
+        .replace(/(⏱️|🏃‍♂️|🔹)?\s*Pace:/i, 'Average Pace:')
+        .replace(/(🏃‍♂️|🔹)?\s*Distance:/i, 'Distance:')
+        .replace(/(🏋️‍♂️|🔹)?\s*Type:/i, 'Type:')
+        .trim();
+}
+
+/**
  * Computes analytics contextually based on the active viewDate period selection,
  * parsing raw data with absolute mathematical accuracy.
  */
@@ -69,7 +92,7 @@ function calculatePerformanceAnalytics(): void {
     const logs: HistoricLog[] = rawHistory ? JSON.parse(rawHistory) : [];
 
     const months = [
-        "January", "February", "March", "April", "May", "June", 
+        "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     ];
 
@@ -83,43 +106,47 @@ function calculatePerformanceAnalytics(): void {
     }
 
     // Dynamic Context Labels
-    document.getElementById('monthlyLabel')!.innerText = `${months[viewDate.getMonth()].toUpperCase()} MILEAGE`;
-    document.getElementById('yearlyLabel')!.innerText = `${targetYearStr} TOTAL MILEAGE`;
+    const monthlyLabelEl = document.getElementById('monthlyLabel');
+    const yearlyLabelEl = document.getElementById('yearlyLabel');
+    if (monthlyLabelEl) monthlyLabelEl.innerText = `${months[viewDate.getMonth()].toUpperCase()} MILEAGE`;
+    if (yearlyLabelEl) yearlyLabelEl.innerText = `${targetYearStr} TOTAL MILEAGE`;
 
     // Filter Repositories
     const runningLogs = logs.filter(l => l.type === 'Running');
-    
+
     let monthlyMileage = 0;
     let yearlyMileage = 0;
-    let maxDistance = 0; 
+    let maxDistance = 0;
     let periodTotalPaceSeconds = 0;
     let periodPaceCount = 0;
-    let lifetimeFastestPaceSeconds = Infinity; 
+    let lifetimeFastestPaceSeconds = Infinity;
 
     // Process Running Logs
     runningLogs.forEach(log => {
-        // Robust pattern extraction for distance numbers
-        const distMatch = log.summary.match(/Distance:\s*([0-9\.]+)/i);
-        // Captures "MM:SS" format up to the colon separator cleanly
-        const paceMatch = log.summary.match(/Pace:\s*([0-9]+):([0-9]+)/i);
+        const cleanSummary = sanitizeRawLogDashboardSummary(log.summary);
+        const cleanLogDate = log.date.trim();
+
+        // High-precision clean regex matching
+        const distMatch = cleanSummary.match(/Distance:\s*([0-9\.]+)/i);
+        const paceMatch = cleanSummary.match(/Average Pace:\s*([0-9]+):([0-9]+)/i);
 
         if (distMatch) {
             const dist = parseFloat(distMatch[1]);
-            
+
             // Period context filtering checks
-            if (log.date.startsWith(targetMonthPrefix)) monthlyMileage += dist;
-            if (log.date.startsWith(targetYearStr)) yearlyMileage += dist;
-            if (dist > maxDistance) maxDistance = dist; 
+            if (cleanLogDate.startsWith(targetMonthPrefix)) monthlyMileage += dist;
+            if (cleanLogDate.startsWith(targetYearStr)) yearlyMileage += dist;
+            if (dist > maxDistance) maxDistance = dist;
 
             if (paceMatch) {
                 const mins = parseInt(paceMatch[1], 10);
                 const secs = parseInt(paceMatch[2], 10);
-                
-                // CRITICAL FIX: Standardized exact 60-second clock conversion
+
+                // Standardized exact 60-second clock conversion
                 const totalSecs = (mins * 60) + secs;
 
-                // Average calculation scoped directly to the selected period
-                if (log.date.startsWith(targetMonthPrefix)) {
+                // Average calculation scoped directly to the selected period month
+                if (cleanLogDate.startsWith(targetMonthPrefix)) {
                     periodTotalPaceSeconds += totalSecs;
                     periodPaceCount++;
                 }
@@ -133,20 +160,21 @@ function calculatePerformanceAnalytics(): void {
     });
 
     // Process Gym Logs contextually filtered to the chosen month
-    const periodGymLogs = logs.filter(l => l.type === 'Gym' && l.date.startsWith(targetMonthPrefix));
+    const periodGymLogs = logs.filter(l => l.type === 'Gym' && l.date.trim().startsWith(targetMonthPrefix));
     let periodGymCount = periodGymLogs.length;
     let maxWeight = 0;
     let maxMuscle = 0;
     let focusMap: { [key: string]: number } = {};
 
     periodGymLogs.forEach(log => {
-        const weightMatch = log.summary.match(/Weight:\s*([0-9\.]+)/i);
-        const muscleMatch = log.summary.match(/Muscle Mass:\s*([0-9\.]+)/i);
-        const focusMatch = log.summary.match(/Focus:\s*([^\n]+)/i);
+        const cleanGymSummary = sanitizeRawLogDashboardSummary(log.summary);
+        const weightMatch = cleanGymSummary.match(/Weight:\s*([0-9\.]+)/i);
+        const muscleMatch = cleanGymSummary.match(/Muscle Mass:\s*([0-9\.]+)/i);
+        const focusMatch = cleanGymSummary.match(/Focus:\s*([^\n]+)/i);
 
         if (weightMatch) maxWeight = Math.max(maxWeight, parseFloat(weightMatch[1]));
         if (muscleMatch) maxMuscle = Math.max(maxMuscle, parseFloat(muscleMatch[1]));
-        
+
         if (focusMatch) {
             const focus = focusMatch[1].trim();
             focusMap[focus] = (focusMap[focus] || 0) + 1;
@@ -162,31 +190,43 @@ function calculatePerformanceAnalytics(): void {
         }
     }
 
-    // --- Render Elements to DOM ---
-    document.getElementById('runMonthDist')!.innerHTML = `${monthlyMileage.toFixed(2)} <span class="unit">km</span>`;
-    document.getElementById('runYearDist')!.innerHTML = `${yearlyMileage.toFixed(2)} <span class="unit">km</span>`;
-    document.getElementById('runMaxDist')!.innerText = `${maxDistance.toFixed(2)} km`;
+    // --- Render Elements to DOM with Safe Conditional Hooks ---
+    const runMonthDistEl = document.getElementById('runMonthDist');
+    const runYearDistEl = document.getElementById('runYearDist');
+    const runMaxDistEl = document.getElementById('runMaxDist');
 
-    const avgPaceEl = document.getElementById('runAvgPace')!;
-    if (periodPaceCount > 0) {
-        const avgSecs = periodTotalPaceSeconds / periodPaceCount;
-        // CRITICAL FIX: Base-60 conversion for rendering back to string form
-        avgPaceEl.innerText = `${Math.floor(avgSecs / 60)}:${String(Math.floor(avgSecs % 60)).padStart(2, '0')} /km`;
-    } else {
-        avgPaceEl.innerText = '--:--';
+    if (runMonthDistEl) runMonthDistEl.innerHTML = `${monthlyMileage.toFixed(2)} <span class="unit">km</span>`;
+    if (runYearDistEl) runYearDistEl.innerHTML = `${yearlyMileage.toFixed(2)} <span class="unit">km</span>`;
+    if (runMaxDistEl) runMaxDistEl.innerText = `${maxDistance.toFixed(2)} km`;
+
+    const avgPaceEl = document.getElementById('runAvgPace');
+    if (avgPaceEl) {
+        if (periodPaceCount > 0) {
+            const avgSecs = periodTotalPaceSeconds / periodPaceCount;
+            avgPaceEl.innerText = `${Math.floor(avgSecs / 60)}:${String(Math.floor(avgSecs % 60)).padStart(2, '0')} /km`;
+        } else {
+            avgPaceEl.innerText = '--:--';
+        }
     }
 
-    const fastPaceEl = document.getElementById('runFastPace')!;
-    if (lifetimeFastestPaceSeconds !== Infinity) {
-        // CRITICAL FIX: Base-60 conversion for rendering back to string form
-        fastPaceEl.innerText = `${Math.floor(lifetimeFastestPaceSeconds / 60)}:${String(Math.floor(lifetimeFastestPaceSeconds % 60)).padStart(2, '0')} /km`;
-    } else {
-        fastPaceEl.innerText = '--:--';
+    const fastPaceEl = document.getElementById('runFastPace');
+    if (fastPaceEl) {
+        if (lifetimeFastestPaceSeconds !== Infinity) {
+            fastPaceEl.innerText = `${Math.floor(lifetimeFastestPaceSeconds / 60)}:${String(Math.floor(lifetimeFastestPaceSeconds % 60)).padStart(2, '0')} /km`;
+        } else {
+            fastPaceEl.innerText = '--:--';
+        }
     }
 
-    document.getElementById('gymTotalTime')!.innerHTML = `${periodGymCount * 45} <span class="unit">mins</span>`;
-    document.getElementById('gymTotalCount')!.innerHTML = `${periodGymCount} <span class="unit">logs</span>`;
-    document.getElementById('gymTopFocus')!.innerText = topFocus;
-    document.getElementById('gymMaxWeight')!.innerText = `${maxWeight.toFixed(1)} kg`;
-    document.getElementById('gymMaxMuscle')!.innerText = `${maxMuscle.toFixed(1)} kg`;
+    const gymTotalTimeEl = document.getElementById('gymTotalTime');
+    const gymTotalCountEl = document.getElementById('gymTotalCount');
+    const gymTopFocusEl = document.getElementById('gymTopFocus');
+    const gymMaxWeightEl = document.getElementById('gymMaxWeight');
+    const gymMaxMuscleEl = document.getElementById('gymMaxMuscle');
+
+    if (gymTotalTimeEl) gymTotalTimeEl.innerHTML = `${periodGymCount * 45} <span class="unit">mins</span>`;
+    if (gymTotalCountEl) gymTotalCountEl.innerHTML = `${periodGymCount} <span class="unit">logs</span>`;
+    if (gymTopFocusEl) gymTopFocusEl.innerText = topFocus;
+    if (gymMaxWeightEl) gymMaxWeightEl.innerText = `${maxWeight.toFixed(1)} kg`;
+    if (gymMaxMuscleEl) gymMaxMuscleEl.innerText = `${maxMuscle.toFixed(1)} kg`;
 }

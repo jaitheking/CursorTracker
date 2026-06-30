@@ -1,4 +1,3 @@
-// Define explicitly typed schema for local state tracking
 interface TrackerState {
     workoutType: string;
     runDist: string;
@@ -9,23 +8,20 @@ interface TrackerState {
     bf: string;
     description: string;
     comments: string;
-    [key: string]: string; // Index signature for flexible collection loops
+    [key: string]: string;
 }
 
-// Global immutable list tracking all target elements
 const formFields: string[] = [
     'workoutType', 'runDist', 'avgPace', 'gymFocus', 
     'weight', 'muscle', 'bf', 'description', 'comments'
 ];
 
-// Initializer Routine
 document.addEventListener('DOMContentLoaded', (): void => {
     const logDateInput = document.getElementById('logDate') as HTMLInputElement | null;
     if (logDateInput) {
         logDateInput.valueAsDate = new Date();
     }
 
-    // Dynamically inject the current calendar year into the footer layout block
     const currentYearEl = document.getElementById('currentYear');
     if (currentYearEl) {
         currentYearEl.innerText = new Date().getFullYear().toString();
@@ -36,7 +32,6 @@ document.addEventListener('DOMContentLoaded', (): void => {
     setupPresetBindings();
 });
 
-// Bind element interaction event streams safely
 function bindAutoSaveListeners(): void {
     formFields.forEach((fieldId: string) => {
         const node = document.getElementById(fieldId) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null;
@@ -51,23 +46,11 @@ function bindAutoSaveListeners(): void {
         workoutTypeSelect.addEventListener('change', toggleFields);
     }
 
-    const generateBtn = document.getElementById('generateBtn') as HTMLButtonElement | null;
-    if (generateBtn) {
-        generateBtn.addEventListener('click', generateSummary);
-    }
-
-    const copyBtn = document.getElementById('copyBtn') as HTMLButtonElement | null;
-    if (copyBtn) {
-        copyBtn.addEventListener('click', copyToClipboard);
-    }
-
-    const saveBtn = document.getElementById('saveBtn') as HTMLButtonElement | null;
-    if (saveBtn) {
-        saveBtn.addEventListener('click', saveLogAsFile);
-    }
+    document.getElementById('generateBtn')?.addEventListener('click', generateSummary);
+    document.getElementById('copyBtn')?.addEventListener('click', copyToClipboard);
+    document.getElementById('saveBtn')?.addEventListener('click', saveLogAsFile);
 }
 
-// Map functional attributes directly to configuration utilities
 function setupPresetBindings(): void {
     const attachClick = (selector: string, callback: (e: Event) => void) => {
         document.querySelectorAll(selector).forEach(btn => btn.addEventListener('click', callback));
@@ -153,28 +136,28 @@ function generateSummary(): void {
     const desc = (document.getElementById('description') as HTMLTextAreaElement).value.trim();
     const comments = (document.getElementById('comments') as HTMLTextAreaElement).value.trim();
 
+    // Outputs clean headers to simplify parsing
     let summary = `📊 **WORKOUT LOG: ${date}**\n`;
-    summary += `🔹 **Type:** ${type}\n`;
+    summary += `Type: ${type}\n`;
 
     if (type === 'Running') {
         const dist = (document.getElementById('runDist') as HTMLInputElement).value;
         const pace = (document.getElementById('avgPace') as HTMLInputElement).value;
-        if (dist) summary += `🏃‍♂️ **Distance:** ${dist} km\n`;
-        if (pace) summary += `⏱️ **Average Pace:** ${pace} /km\n`;
+        if (dist) summary += `Distance: ${dist} km\n`;
+        if (pace) summary += `Average Pace: ${pace} /km\n`;
     } else {
         const focus = (document.getElementById('gymFocus') as HTMLInputElement).value;
-        if (focus) summary += `💪 **Focus:** ${focus}\n`;
+        if (focus) summary += `Focus: ${focus}\n`;
     }
 
     if (weight || muscle || bf) {
-        summary += `\n⚖️ **Body Composition:**\n`;
-        if (weight) summary += `   • Weight: ${weight} kg\n`;
-        if (muscle) summary += `   • Muscle Mass: ${muscle} kg\n`;
-        if (bf)     summary += `   • Body Fat: ${bf}%\n`;
+        summary += `\nWeight: ${weight ? weight + ' kg' : 'N/A'}\n`;
+        summary += `Muscle Mass: ${muscle ? muscle + ' kg' : 'N/A'}\n`;
+        summary += `Body Fat: ${bf ? bf + '%' : 'N/A'}\n`;
     }
 
-    if (desc) summary += `\n📝 **Details:**\n${desc}\n`;
-    if (comments) summary += `\n⚠️ **Condition/Context:**\n${comments}\n`;
+    if (desc) summary += `\nDetails:\n${desc}\n`;
+    if (comments) summary += `\nComments:\n${comments}\n`;
 
     const outputDiv = document.getElementById('output');
     const actionGroup = document.getElementById('actionGroup');
@@ -184,6 +167,30 @@ function generateSummary(): void {
         outputDiv.classList.remove('hidden');
         actionGroup.classList.remove('hidden');
     }
+
+    // Auto-save generated output straight into historical timeline
+    saveToHistoryLogs(date, type, summary);
+}
+
+function saveToHistoryLogs(date: string, type: string, summaryText: string): void {
+    const rawHistory = localStorage.getItem('cursor_workout_history');
+    const logs = rawHistory ? JSON.parse(rawHistory) : [];
+    
+    // Strip parent titles during compilation step to avoid multi-header nesting
+    const cleanSummaryText = summaryText.replace(/📊 \*\*WORKOUT LOG: .*\*\n/, '');
+
+    const newLog = {
+        id: Date.now().toString(),
+        date: date,
+        type: type,
+        summary: cleanSummaryText
+    };
+    
+    // De-duplicate existing items on the exact same date and block path
+    const filteredLogs = logs.filter((l: any) => !(l.date === date && l.type === type));
+    filteredLogs.push(newLog);
+    
+    localStorage.setItem('cursor_workout_history', JSON.stringify(filteredLogs));
 }
 
 function saveLogAsFile(): void {
@@ -195,7 +202,7 @@ function saveLogAsFile(): void {
     const dateStr = logDateInput?.value || new Date().toISOString().split('T')[0];
     const filename = `${dateStr}.txt`;
 
-    const nav = navigator as any; // Cast safely for experimental features
+    const nav = navigator as any;
     if (nav.canShare && nav.canShare({ files: [] })) {
         try {
             const file = new File([text], filename, { type: 'text/plain' });
@@ -209,9 +216,7 @@ function saveLogAsFile(): void {
                 if (err.name !== 'AbortError') triggerAnchorDownload(text, filename);
             });
             return;
-        } catch (e) {
-            // Fall back cleanly
-        }
+        } catch (e) { /* clean fallback execution */ }
     }
     triggerAnchorDownload(text, filename);
 }
@@ -268,20 +273,4 @@ function showSuccess(): void {
         copyBtn.style.background = 'transparent';
         copyBtn.style.color = 'var(--accent-color)';
     }, 1500);
-}
-
-// Append this small sequence into your file download or clip tracking pipeline in src/app.ts:
-function saveToHistoryLogs(date: string, type: string, summaryText: string): void {
-    const rawHistory = localStorage.getItem('cursor_workout_history');
-    const logs = rawHistory ? JSON.parse(rawHistory) : [];
-    
-    const newLog = {
-        id: Date.now().toString(),
-        date: date,
-        type: type,
-        summary: summaryText.replace(/📊 \*\*WORKOUT LOG: .*\*\n/, '') // Strip duplicate titles
-    };
-    
-    logs.push(newLog);
-    localStorage.setItem('cursor_workout_history', JSON.stringify(logs));
 }

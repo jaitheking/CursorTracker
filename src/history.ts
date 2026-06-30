@@ -1,4 +1,3 @@
-// Define the structured type matching your historical markdown files
 interface HistoricLog {
     id: string;
     date: string;
@@ -79,11 +78,8 @@ function renderCalendarView(): void {
         dayCell.className = 'calendar-day';
         dayCell.innerText = day.toString();
 
-        // Standardize current grid location as an ISO date comparison string (YYYY-MM-DD)
         const currentIsoStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
-        // Match logged sessions corresponding to this date block
-        const activeWorkouts = logs.filter((log: HistoricLog) => log.date === currentIsoStr);
+        const activeWorkouts = logs.filter((log: HistoricLog) => log.date.trim() === currentIsoStr);
 
         if (activeWorkouts.length > 0) {
             dayCell.classList.add('has-workout');
@@ -139,28 +135,26 @@ function setupFileImporter(): void {
             try {
                 let text = await readFileAsText(file);
                 
-                // FIX: Standardize line breaks and scrub invisible mobile carriage return garbage (\r)
-                text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+                // Normalizes structure for accurate header tracking
+                const cleanInputText = sanitizeRawLogSummary(text);
 
-                // NEW RESILIENT MATCHERS: Looks for the values directly and strips any markdown bold asterisks
                 const dateMatch = text.match(/WORKOUT LOG:\s*([0-9\-]+)/i);
-                const typeMatch = text.match(/Type:\s*\*?\*?\s*([a-zA-Z\/ ]+)/i);
+                const typeMatch = cleanInputText.match(/Type:\s*([a-zA-Z\/ ]+)/i);
 
                 if (dateMatch) {
                     const parsedDate = dateMatch[1].trim();
                     let parsedType = typeMatch ? typeMatch[1].trim() : 'Gym';
                     
-                    // Extra validation sanitization step for type names
                     if (parsedType.toLowerCase().includes('run')) {
                         parsedType = 'Running';
                     } else {
                         parsedType = 'Gym';
                     }
 
+                    // Extracts raw summary lines clean of custom titles
                     const sanitizedSummary = text.replace(/📊 \*\*WORKOUT LOG: .*\*\n/, '');
 
-                    // Anti-Collision Check
-                    const isDuplicate = currentLogs.some(log => log.date === parsedDate && log.type === parsedType);
+                    const isDuplicate = currentLogs.some(log => log.date.trim() === parsedDate && log.type === parsedType);
 
                     if (!isDuplicate) {
                         currentLogs.push({
@@ -178,12 +172,9 @@ function setupFileImporter(): void {
         });
 
         await Promise.all(fileReadPromises);
-
         localStorage.setItem('cursor_workout_history', JSON.stringify(currentLogs));
         
-        // Redraw calendar and history mapping elements instantly
         renderCalendarView();
-        
         statusSpan.innerText = `✅ Successfully synced ${importedCount} new historical logs!`;
         target.value = ''; 
         setTimeout(() => { statusSpan.innerText = ''; }, 4000);
@@ -268,4 +259,17 @@ function bindHistoryActions(): void {
             closeInspector();
         }
     });
+}
+
+function sanitizeRawLogSummary(text: string): string {
+    if (!text) return "";
+    return text
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        .replace(/\*\*/g, '')
+        .replace(/Avg\s*Pace:/i, 'Average Pace:')
+        .replace(/(⏱️|🏃‍♂️|🔹)?\s*Pace:/i, 'Average Pace:')
+        .replace(/(🏃‍♂️|🔹)?\s*Distance:/i, 'Distance:')
+        .replace(/(🏋️‍♂️|🔹)?\s*Type:/i, 'Type:')
+        .trim();
 }

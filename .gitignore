@@ -8,7 +8,7 @@ node_modules/
 # NOTE: If you are relying on Vercel to look at your pre-compiled scripts/app.js directly, 
 # you can comment out the line below by adding a '#'. However, once we add a build step or dev server,
 # it is best practice to ignore compiled files.
-scripts/app.js
+/scripts/*.js
 
 # TypeScript / Build Caches
 *.tsbuildinfo

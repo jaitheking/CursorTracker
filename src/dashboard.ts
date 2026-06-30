@@ -27,18 +27,27 @@ function initializeSegmentTabs(): void {
     const panelRun = document.getElementById('runningStatsPanel');
     const panelGym = document.getElementById('gymStatsPanel');
 
+    // FIX: Use optional chaining (?.) on the buttons so TypeScript knows it won't crash if null
     btnRun?.addEventListener('click', () => {
         btnRun.classList.add('active');
         btnGym?.classList.remove('active');
-        panelRun?.classList.remove('hidden');
-        panelGym?.classList.add('hidden');
+        
+        // Defensive Guard: Ensure panels exist before manipulating their classList
+        if (panelRun && panelGym) {
+            panelRun.classList.remove('hidden');
+            panelGym.classList.add('hidden');
+        }
     });
 
+    // FIX: Apply the same safe optional chaining and conditional guards here
     btnGym?.addEventListener('click', () => {
         btnGym.classList.add('active');
-        btnRun.classList.remove('active');
-        panelGym?.classList.remove('hidden');
-        panelRun?.classList.add('hidden');
+        btnRun?.classList.remove('active');
+        
+        if (panelRun && panelGym) {
+            panelGym.classList.remove('hidden');
+            panelRun.classList.add('hidden');
+        }
     });
 }
 

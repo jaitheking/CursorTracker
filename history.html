@@ -13,7 +13,7 @@
 
 <div class="container">
     <div class="header">
-        <h2>📊 PERFORMANCE HISTORY</h2>
+        <h2>📊 PERFORMANCE DASHBOARD</h2>
         <div class="subtitle">Athlete: Jaiprashanth</div>
     </div>
 
@@ -26,13 +26,25 @@
         <span id="importStatus" class="import-status"></span>
     </div>
 
-    <div class="history-section">
-        <div id="historyLogList" class="history-list">
-            <p class="empty-state">No previous logs saved on this device yet.</p>
-        </div>
-        
-        <button type="button" id="clearHistoryBtn" class="danger-btn hidden">🗑️ Wipe History Cache</button>
+    <div class="calendar-controls">
+        <button type="button" id="prevMonthBtn" class="control-btn">◀</button>
+        <h3 id="calendarMonthTitle">June 2026</h3>
+        <button type="button" id="nextMonthBtn" class="control-btn">▶</button>
     </div>
+
+    <div class="calendar-container">
+        <div class="weekdays-grid">
+            <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+        </div>
+        <div id="calendarDaysGrid" class="days-grid"></div>
+    </div>
+
+    <div id="inspectorPanel" class="inspector-panel hidden">
+        <h3 id="inspectorHeader">Session Management</h3>
+        <div id="inspectorContent"></div>
+    </div>
+
+    <button type="button" id="clearHistoryBtn" class="danger-btn hidden">🗑️ Wipe History Cache</button>
 
     <footer class="app-footer">
         <p>© <span id="currentYear"></span> · Developed with ⚡ by <strong>Jaiprashanth</strong></p>

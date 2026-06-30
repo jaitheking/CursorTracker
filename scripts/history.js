@@ -1,44 +1,99 @@
 "use strict";
+// Global View-State Boundaries
+let currentDate = new Date();
+let selectedLogId = null;
+// Core Initializer Routine
 document.addEventListener('DOMContentLoaded', () => {
-    // Dynamic Year Injection
     const currentYearEl = document.getElementById('currentYear');
     if (currentYearEl) {
         currentYearEl.innerText = new Date().getFullYear().toString();
     }
-    renderHistoryTimeline();
-    bindHistoryActions();
+    initializeCalendarControls();
     setupFileImporter();
+    bindHistoryActions();
+    // Initial draw pass
+    renderCalendarView();
 });
-function renderHistoryTimeline() {
-    const listContainer = document.getElementById('historyLogList');
-    const clearBtn = document.getElementById('clearHistoryBtn');
-    if (!listContainer)
-        return;
-    // Retrieve historical records array array
-    const rawHistory = localStorage.getItem('cursor_workout_history');
-    const logs = rawHistory ? JSON.parse(rawHistory) : [];
-    if (logs.length === 0) {
-        listContainer.innerHTML = `<p class="empty-state">No previous logs saved on this device yet.</p>`;
-        clearBtn?.classList.add('hidden');
-        return;
-    }
-    // Sort entries chronologically descending (newest first)
-    logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    clearBtn?.classList.remove('hidden');
-    listContainer.innerHTML = '';
-    logs.forEach((log) => {
-        const card = document.createElement('div');
-        card.className = 'history-card';
-        card.innerHTML = `
-            <div class="meta">
-                <span>${log.type === 'Running' ? '🏃‍♂️ Running' : '🏋️‍♂️ Gym/Strength'}</span>
-                <span>${log.date}</span>
-            </div>
-            <div class="metrics">${log.summary}</div>
-        `;
-        listContainer.appendChild(card);
+function initializeCalendarControls() {
+    document.getElementById('prevMonthBtn')?.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() - 1);
+        renderCalendarView();
+        closeInspector();
+    });
+    document.getElementById('nextMonthBtn')?.addEventListener('click', () => {
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        renderCalendarView();
+        closeInspector();
     });
 }
+/**
+ * Primary Layout Engine: Calculates grid indexes, queries local data arrays,
+ * and dynamically renders individual date cells.
+ */
+function renderCalendarView() {
+    const daysGrid = document.getElementById('calendarDaysGrid');
+    const monthTitle = document.getElementById('calendarMonthTitle');
+    if (!daysGrid || !monthTitle)
+        return;
+    const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+    monthTitle.innerText = `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+    const rawHistory = localStorage.getItem('cursor_workout_history');
+    const logs = rawHistory ? JSON.parse(rawHistory) : [];
+    daysGrid.innerHTML = '';
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    // 1. Render padding blocks for pre-month alignment
+    for (let i = 0; i < firstDayIndex; i++) {
+        const space = document.createElement('div');
+        space.className = 'calendar-day empty';
+        daysGrid.appendChild(space);
+    }
+    // 2. Map individual active workout days
+    for (let day = 1; day <= totalDays; day++) {
+        const dayCell = document.createElement('div');
+        dayCell.className = 'calendar-day';
+        dayCell.innerText = day.toString();
+        // Standardize current grid location as an ISO date comparison string (YYYY-MM-DD)
+        const currentIsoStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        // Match logged sessions corresponding to this date block
+        const activeWorkouts = logs.filter((log) => log.date === currentIsoStr);
+        if (activeWorkouts.length > 0) {
+            dayCell.classList.add('has-workout');
+            const indicators = activeWorkouts.map(w => w.type === 'Running' ? '🏃‍♂️' : '🏋️‍♂️').join('');
+            const badge = document.createElement('span');
+            badge.className = 'workout-indicator';
+            badge.innerText = indicators;
+            dayCell.appendChild(badge);
+            dayCell.addEventListener('click', () => openInspector(activeWorkouts[0]));
+        }
+        else {
+            dayCell.addEventListener('click', closeInspector);
+        }
+        const today = new Date();
+        if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+            dayCell.classList.add('today');
+        }
+        daysGrid.appendChild(dayCell);
+    }
+    const clearBtn = document.getElementById('clearHistoryBtn');
+    if (clearBtn) {
+        if (logs.length > 0) {
+            clearBtn.classList.remove('hidden');
+        }
+        else {
+            clearBtn.classList.add('hidden');
+        }
+    }
+}
+/**
+ * High-Performance Ingestion Loop: Processes batch file selections asynchronously,
+ * safely cleans up mobile carriage lines, and triggers an immediate UI redraw.
+ */
 function setupFileImporter() {
     const fileImporter = document.getElementById('fileImporter');
     const statusSpan = document.getElementById('importStatus');
@@ -52,20 +107,26 @@ function setupFileImporter() {
         const rawHistory = localStorage.getItem('cursor_workout_history');
         let currentLogs = rawHistory ? JSON.parse(rawHistory) : [];
         let importedCount = 0;
-        // Loop through every uploaded text file asynchronously
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
+        const fileReadPromises = Array.from(files).map(async (file) => {
             try {
-                const text = await readFileAsText(file);
-                // Regex patterns to parse out specific data markers inside your markdown template
-                const dateMatch = text.match(/WORKOUT LOG:\s*([^\n\*]+)/i);
-                const typeMatch = text.match(/Type:\s*([^\n\*]+)/i);
+                let text = await readFileAsText(file);
+                // FIX: Standardize line breaks and scrub invisible mobile carriage return garbage (\r)
+                text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+                // NEW RESILIENT MATCHERS: Looks for the values directly and strips any markdown bold asterisks
+                const dateMatch = text.match(/WORKOUT LOG:\s*([0-9\-]+)/i);
+                const typeMatch = text.match(/Type:\s*\*?\*?\s*([a-zA-Z\/ ]+)/i);
                 if (dateMatch) {
-                    const parsedDate = dateMatch[1].replace(/\*/g, '').trim();
-                    const parsedType = typeMatch ? typeMatch[1].replace(/\*/g, '').trim() : 'Gym';
-                    // Strip the header out to keep standard history cards uniform
+                    const parsedDate = dateMatch[1].trim();
+                    let parsedType = typeMatch ? typeMatch[1].trim() : 'Gym';
+                    // Extra validation sanitization step for type names
+                    if (parsedType.toLowerCase().includes('run')) {
+                        parsedType = 'Running';
+                    }
+                    else {
+                        parsedType = 'Gym';
+                    }
                     const sanitizedSummary = text.replace(/📊 \*\*WORKOUT LOG: .*\*\n/, '');
-                    // Deduplication check: verify if this exact file entry timestamp is already saved
+                    // Anti-Collision Check
                     const isDuplicate = currentLogs.some(log => log.date === parsedDate && log.type === parsedType);
                     if (!isDuplicate) {
                         currentLogs.push({
@@ -79,20 +140,18 @@ function setupFileImporter() {
                 }
             }
             catch (err) {
-                console.error(`Failed parsing file: ${file.name}`, err);
+                console.error(`Parsing failure on: ${file.name}`, err);
             }
-        }
-        // Commit updated history back to local storage and update view
+        });
+        await Promise.all(fileReadPromises);
         localStorage.setItem('cursor_workout_history', JSON.stringify(currentLogs));
-        renderHistoryTimeline();
+        // Redraw calendar and history mapping elements instantly
+        renderCalendarView();
         statusSpan.innerText = `✅ Successfully synced ${importedCount} new historical logs!`;
-        target.value = ''; // Reset input selection state
+        target.value = '';
         setTimeout(() => { statusSpan.innerText = ''; }, 4000);
     });
 }
-/**
- * Wraps the HTML5 FileReader API inside a clean Promise construct
- */
 function readFileAsText(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -101,14 +160,64 @@ function readFileAsText(file) {
         reader.readAsText(file);
     });
 }
-function bindHistoryActions() {
-    const clearBtn = document.getElementById('clearHistoryBtn');
-    if (!clearBtn)
+function openInspector(log) {
+    const panel = document.getElementById('inspectorPanel');
+    const header = document.getElementById('inspectorHeader');
+    const content = document.getElementById('inspectorContent');
+    if (!panel || !header || !content)
         return;
-    clearBtn.addEventListener('click', () => {
-        if (confirm('⚠️ Are you absolutely sure you want to completely delete your entire local workout history log cache? This step cannot be undone.')) {
+    selectedLogId = log.id;
+    panel.classList.remove('hidden');
+    header.innerText = `🛠️ Manage Session: ${log.date}`;
+    content.innerHTML = `
+        <label style="font-size:0.8rem; font-weight:700; margin-bottom:4px; display:block;">Workout Data Template Editor</label>
+        <textarea id="editLogSummary" class="edit-textarea" rows="8">${log.summary}</textarea>
+        <div class="inspector-actions">
+            <button type="button" class="inline-save-btn" id="inlineSaveBtn">💾 Update Log</button>
+            <button type="button" class="inline-delete-btn" id="inlineDeleteBtn">🗑️ Delete</button>
+        </div>
+    `;
+    document.getElementById('inlineSaveBtn')?.addEventListener('click', saveModifiedLog);
+    document.getElementById('inlineDeleteBtn')?.addEventListener('click', deleteIndividualLog);
+}
+function closeInspector() {
+    document.getElementById('inspectorPanel')?.classList.add('hidden');
+    selectedLogId = null;
+}
+function saveModifiedLog() {
+    if (!selectedLogId)
+        return;
+    const textArea = document.getElementById('editLogSummary');
+    if (!textArea)
+        return;
+    const rawHistory = localStorage.getItem('cursor_workout_history');
+    let logs = rawHistory ? JSON.parse(rawHistory) : [];
+    logs = logs.map(log => {
+        if (log.id === selectedLogId) {
+            log.summary = textArea.value;
+        }
+        return log;
+    });
+    localStorage.setItem('cursor_workout_history', JSON.stringify(logs));
+    renderCalendarView();
+    closeInspector();
+}
+function deleteIndividualLog() {
+    if (!selectedLogId || !confirm('Confirm deleting this single workout log entry?'))
+        return;
+    const rawHistory = localStorage.getItem('cursor_workout_history');
+    let logs = rawHistory ? JSON.parse(rawHistory) : [];
+    logs = logs.filter(log => log.id !== selectedLogId);
+    localStorage.setItem('cursor_workout_history', JSON.stringify(logs));
+    renderCalendarView();
+    closeInspector();
+}
+function bindHistoryActions() {
+    document.getElementById('clearHistoryBtn')?.addEventListener('click', () => {
+        if (confirm('⚠️ Wipe entire local workout history log cache? This step cannot be undone.')) {
             localStorage.removeItem('cursor_workout_history');
-            renderHistoryTimeline();
+            renderCalendarView();
+            closeInspector();
         }
     });
 }

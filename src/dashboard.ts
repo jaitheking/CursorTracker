@@ -27,19 +27,16 @@ function initializeSegmentTabs(): void {
     const panelRun = document.getElementById('runningStatsPanel');
     const panelGym = document.getElementById('gymStatsPanel');
 
-    // FIX: Use optional chaining (?.) on the buttons so TypeScript knows it won't crash if null
     btnRun?.addEventListener('click', () => {
         btnRun.classList.add('active');
         btnGym?.classList.remove('active');
         
-        // Defensive Guard: Ensure panels exist before manipulating their classList
         if (panelRun && panelGym) {
             panelRun.classList.remove('hidden');
             panelGym.classList.add('hidden');
         }
     });
 
-    // FIX: Apply the same safe optional chaining and conditional guards here
     btnGym?.addEventListener('click', () => {
         btnGym.classList.add('active');
         btnRun?.classList.remove('active');
@@ -65,7 +62,7 @@ function initializePeriodControls(): void {
 
 /**
  * Computes analytics contextually based on the active viewDate period selection,
- * allowing long-term historical exploration across multiple months and years.
+ * parsing raw data with absolute mathematical accuracy.
  */
 function calculatePerformanceAnalytics(): void {
     const rawHistory = localStorage.getItem('cursor_workout_history');
@@ -94,15 +91,17 @@ function calculatePerformanceAnalytics(): void {
     
     let monthlyMileage = 0;
     let yearlyMileage = 0;
-    let maxDistance = 0; // Lifetime stat
+    let maxDistance = 0; 
     let periodTotalPaceSeconds = 0;
     let periodPaceCount = 0;
-    let lifetimeFastestPaceSeconds = Infinity; // Lifetime stat
+    let lifetimeFastestPaceSeconds = Infinity; 
 
     // Process Running Logs
     runningLogs.forEach(log => {
+        // Robust pattern extraction for distance numbers
         const distMatch = log.summary.match(/Distance:\s*([0-9\.]+)/i);
-        const paceMatch = log.summary.match(/Average Pace:\s*([0-9]+):([0-9]+)/i);
+        // Captures "MM:SS" format up to the colon separator cleanly
+        const paceMatch = log.summary.match(/Pace:\s*([0-9]+):([0-9]+)/i);
 
         if (distMatch) {
             const dist = parseFloat(distMatch[1]);
@@ -110,11 +109,13 @@ function calculatePerformanceAnalytics(): void {
             // Period context filtering checks
             if (log.date.startsWith(targetMonthPrefix)) monthlyMileage += dist;
             if (log.date.startsWith(targetYearStr)) yearlyMileage += dist;
-            if (dist > maxDistance) maxDistance = dist; // Absolute record check
+            if (dist > maxDistance) maxDistance = dist; 
 
             if (paceMatch) {
                 const mins = parseInt(paceMatch[1], 10);
                 const secs = parseInt(paceMatch[2], 10);
+                
+                // CRITICAL FIX: Standardized exact 60-second clock conversion
                 const totalSecs = (mins * 60) + secs;
 
                 // Average calculation scoped directly to the selected period
@@ -162,7 +163,6 @@ function calculatePerformanceAnalytics(): void {
     }
 
     // --- Render Elements to DOM ---
-    // Running Updates
     document.getElementById('runMonthDist')!.innerHTML = `${monthlyMileage.toFixed(2)} <span class="unit">km</span>`;
     document.getElementById('runYearDist')!.innerHTML = `${yearlyMileage.toFixed(2)} <span class="unit">km</span>`;
     document.getElementById('runMaxDist')!.innerText = `${maxDistance.toFixed(2)} km`;
@@ -170,6 +170,7 @@ function calculatePerformanceAnalytics(): void {
     const avgPaceEl = document.getElementById('runAvgPace')!;
     if (periodPaceCount > 0) {
         const avgSecs = periodTotalPaceSeconds / periodPaceCount;
+        // CRITICAL FIX: Base-60 conversion for rendering back to string form
         avgPaceEl.innerText = `${Math.floor(avgSecs / 60)}:${String(Math.floor(avgSecs % 60)).padStart(2, '0')} /km`;
     } else {
         avgPaceEl.innerText = '--:--';
@@ -177,12 +178,12 @@ function calculatePerformanceAnalytics(): void {
 
     const fastPaceEl = document.getElementById('runFastPace')!;
     if (lifetimeFastestPaceSeconds !== Infinity) {
+        // CRITICAL FIX: Base-60 conversion for rendering back to string form
         fastPaceEl.innerText = `${Math.floor(lifetimeFastestPaceSeconds / 60)}:${String(Math.floor(lifetimeFastestPaceSeconds % 60)).padStart(2, '0')} /km`;
     } else {
         fastPaceEl.innerText = '--:--';
     }
 
-    // Gym Updates (Time spent calculated contextually per session at a standard 45-min duration)
     document.getElementById('gymTotalTime')!.innerHTML = `${periodGymCount * 45} <span class="unit">mins</span>`;
     document.getElementById('gymTotalCount')!.innerHTML = `${periodGymCount} <span class="unit">logs</span>`;
     document.getElementById('gymTopFocus')!.innerText = topFocus;

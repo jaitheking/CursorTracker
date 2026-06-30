@@ -3,89 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cursor Performance Tracker - Jaiprashanth</title>
+    <title>⚡ Performance Dashboard - Jaiprashanth</title>
     
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#ff5722">
-
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <h2>⚡ CURSOR PERFORMANCE</h2>
+    <div class="dashboard-profile">
+        <div class="avatar">JP</div>
+        <div class="profile-meta">
+            <h2>Jaiprashanth</h2>
+            <div class="badge">⚡ Elite Athlete Engine</div>
+        </div>
     </div>
-<a href="/history.html" class="nav-link">📊 View History Dashboard</a>
-    <form id="logForm">
-        <label for="logDate">Workout Date</label>
-        <input type="date" id="logDate" required>
 
-        <label for="workoutType">Workout Type</label>
-        <select id="workoutType">
-            <option value="Running">🏃‍♂️ Running Session</option>
-            <option value="Gym">🏋️‍♂️ Gym / Strength</option>
-        </select>
+    <div class="navigation-hub">
+        <a href="/entry.html" class="hub-card">
+            <span class="hub-icon">📝</span>
+            <span class="hub-title">Log Session</span>
+        </a>
+        <a href="/history.html" class="hub-card">
+            <span class="hub-icon">📅</span>
+            <span class="hub-title">Calendar History</span>
+        </a>
+    </div>
 
-        <div id="runningMetrics">
-            <label for="runDist">Distance (km)</label>
-            <input type="number" id="runDist" step="0.01" placeholder="e.g., 10.00">
-            <div class="preset-container">
-                <button type="button" class="preset-btn preset-dist" data-val="5">5k</button>
-                <button type="button" class="preset-btn preset-dist" data-val="10">10k</button>
-                <button type="button" class="preset-btn preset-dist" data-val="12">12k</button>
-                <button type="button" class="preset-btn preset-dist" data-val="15">15k</button>
-                <button type="button" class="preset-btn preset-dist" data-val="21.1">HM</button>
+    <div class="calendar-controls">
+        <button type="button" id="prevPeriodBtn" class="control-btn">◀</button>
+        <h3 id="dashboardPeriodTitle">Loading Period...</h3>
+        <button type="button" id="nextPeriodBtn" class="control-btn">▶</button>
+    </div>
+
+    <div class="segment-tabs">
+        <button type="button" class="tab-btn active" id="tabRunning">🏃‍♂️ Running Analytics</button>
+        <button type="button" class="tab-btn" id="tabGym">🏋️‍♂️ Strength & Conditioning</button>
+    </div>
+
+    <div id="runningStatsPanel" class="stats-panel">
+        <div class="metric-row-hero">
+            <div class="hero-box">
+                <small id="monthlyLabel">MONTHLY MILEAGE</small>
+                <h1 id="runMonthDist">0.00 <span class="unit">km</span></h1>
             </div>
-
-            <label for="avgPace">Average Pace (/km)</label>
-            <input type="text" id="avgPace" placeholder="e.g., 6:56">
-            <div class="preset-container">
-                <button type="button" class="preset-btn preset-pace" data-val="6:56">6:56 (Baseline)</button>
-                <button type="button" class="preset-btn preset-pace" data-val="6:30">6:30</button>
-                <button type="button" class="preset-btn preset-pace" data-val="6:00">6:00</button>
-            </div>
-        </div>
-
-        <div id="gymMetrics" class="hidden">
-            <label for="gymFocus">Focus / Split</label>
-            <input type="text" id="gymFocus" placeholder="e.g., Lower Body, Core">
-            <div class="preset-container">
-                <button type="button" class="preset-btn preset-gym" data-val="Lower Body & Stability">Lower Body</button>
-                <button type="button" class="preset-btn preset-gym" data-val="Upper Body & Core">Upper Body</button>
-                <button type="button" class="preset-btn preset-gym" data-val="Full Body Kinetic">Full Body</button>
+            <div class="hero-box">
+                <small id="yearlyLabel">YEARLY MILEAGE</small>
+                <h1 id="runYearDist">0.00 <span class="unit">km</span></h1>
             </div>
         </div>
 
-        <label>Body Composition</label>
-        <div class="grid-3">
-            <input type="number" id="weight" step="0.1" placeholder="Wt (kg)">
-            <input type="number" id="muscle" step="0.1" placeholder="Musc (kg)">
-            <input type="number" id="bf" step="0.1" placeholder="BF %">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="label">Period Avg Pace</span>
+                <span class="value" id="runAvgPace">--:--</span>
+            </div>
+            <div class="stat-card">
+                <span class="label">All-Time Fastest Pace</span>
+                <span class="value" id="runFastPace">--:--</span>
+            </div>
+            <div class="stat-card highlight">
+                <span class="label">Furthest Distance</span>
+                <span class="value" id="runMaxDist">0.00 km</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="gymStatsPanel" class="stats-panel hidden">
+        <div class="metric-row-hero">
+            <div class="hero-box workout-hero">
+                <small>ESTIMATED ACTIVE TIME</small>
+                <h1 id="gymTotalTime">0 <span class="unit">mins</span></h1>
+            </div>
+            <div class="hero-box workout-hero">
+                <small>PERIOD SESSIONS TRACKED</small>
+                <h1 id="gymTotalCount">0 <span class="unit">logs</span></h1>
+            </div>
         </div>
 
-        <label for="description">Workout Details / Reps</label>
-        <textarea id="description" rows="3" placeholder="Interval details, weight lifted, etc..."></textarea>
-
-        <label for="comments">Condition & Comments</label>
-        <textarea id="comments" rows="2" placeholder="Body feel, energy levels, sleep quality..."></textarea>
-
-        <button type="button" class="main-btn" id="generateBtn">Generate Log</button>
-        
-        <div class="action-group hidden" id="actionGroup">
-            <button type="button" class="secondary" id="copyBtn">🚀 Copy</button>
-            <button type="button" class="secondary" id="saveBtn">💾 Save .txt</button>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="label">Primary Target Split</span>
+                <span class="value" id="gymTopFocus">N/A</span>
+            </div>
+            <div class="stat-card">
+                <span class="label">Peak Body Weight</span>
+                <span class="value" id="gymMaxWeight">0.0 kg</span>
+            </div>
+            <div class="stat-card">
+                <span class="label">Optimal Lean Muscle</span>
+                <span class="value" id="gymMaxMuscle">0.0 kg</span>
+            </div>
         </div>
-    </form>
-
-    <div id="output" class="hidden"></div>
+    </div>
 
     <footer class="app-footer">
-        <p>© <span id="currentYear"></span> · Developed with ⚡ by <strong>Jaiprashanth</strong></p>
+        <p>© <span id="currentYear"></span> · Driven by Elite Performance Engine</p>
     </footer>
 </div>
 
-<script src="/scripts/app.js" defer></script>
+<script src="/scripts/dashboard.js" defer></script>
 <script src="/scripts/sw-register.js" defer></script>
 </body>
 </html>

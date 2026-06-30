@@ -478,3 +478,169 @@ button.secondary {
     from { opacity: 0; transform: translateY(4px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* Aesthetic Definitions */
+.dashboard-profile {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: linear-gradient(135deg, #2d3748, #1a202c);
+    padding: 20px;
+    border-radius: 16px;
+    color: #fff;
+    margin-bottom: 20px;
+}
+.avatar {
+    width: 56px;
+    height: 56px;
+    background: #ff5722;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: 800;
+}
+.profile-meta h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+.badge {
+    font-size: 0.7rem;
+    background: rgba(255, 87, 34, 0.2);
+    border: 1px solid #ff5722;
+    color: #ff5722;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 700;
+    margin-top: 4px;
+    display: inline-block;
+}
+
+/* Navigation Quick Action Icons */
+.navigation-hub {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+.hub-card {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    text-decoration: none;
+    color: var(--text-color);
+    transition: transform 0.15s, border-color 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+.hub-card:active {
+    transform: scale(0.97);
+    border-color: #ff5722;
+}
+.hub-icon {
+    font-size: 1.8rem;
+}
+.hub-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+/* Segment Tabbing controls */
+.segment-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 16px;
+    gap: 8px;
+}
+.tab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    font-weight: 700;
+    font-size: 0.85rem;
+    padding: 10px 0;
+    cursor: pointer;
+    position: relative;
+}
+.tab-btn.active {
+    color: #ff5722;
+}
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: #ff5722;
+}
+
+/* Hero & Dashboard Metric Cards */
+.metric-row-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.hero-box {
+    background: rgba(255, 87, 34, 0.04);
+    border: 1px solid rgba(255, 87, 34, 0.15);
+    border-radius: 12px;
+    padding: 16px;
+}
+.workout-hero {
+    background: rgba(59, 130, 246, 0.04);
+    border-color: rgba(59, 130, 246, 0.15);
+}
+.hero-box small {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: #6b7280;
+    display: block;
+    letter-spacing: 0.5px;
+}
+.hero-box h1 {
+    margin: 4px 0 0 0;
+    font-size: 1.4rem;
+    font-weight: 900;
+    color: var(--text-color);
+}
+.hero-box .unit {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #6b7280;
+}
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+}
+.stat-card {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.stat-card.highlight {
+    border-color: #ff5722;
+}
+.stat-card .label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #6b7280;
+}
+.stat-card .value {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-color);
+}

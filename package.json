@@ -10,5 +10,9 @@
   "devDependencies": {
     "servor": "^4.0.2",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@supabase/supabase-js": "^2.109.0"
   }
 }

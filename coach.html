@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Coach</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>🧠 AI Performance Coach</h2>
+        
+        <!-- Section for manual Coros / Strength logging -->
+        <div class="panel">
+            <h3>1. Vectorize New Workout</h3>
+            <select id="activityType">
+                <option value="Running">Running (Coros Data)</option>
+                <option value="Strength">Strength Training</option>
+            </select>
+            <textarea id="logDetails" rows="3" placeholder="Paste manual Coros summary or strength log here..."></textarea>
+            <button id="saveLogBtn" class="main-btn">💾 Save to Vector DB</button>
+            <p id="logStatus"></p>
+        </div>
+
+        <!-- Section for interacting with the Coach -->
+        <div class="panel" style="margin-top: 20px;">
+            <h3>2. Request Coaching Plan</h3>
+            <textarea id="coachPrompt" rows="3" placeholder="e.g., How should I structure my run tomorrow based on my last session?"></textarea>
+            <button id="generatePlanBtn" class="main-btn">⚡ Generate Plan</button>
+        </div>
+
+        <div id="coachOutputPanel" class="hidden">
+            <h3>📋 Your Plan</h3>
+            <div id="coachPlanContent" style="white-space: pre-wrap;"></div>
+        </div>
+    </div>
+    
+    <script src="scripts/coach.js"></script>
+</body>
+</html>

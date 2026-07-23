@@ -32,7 +32,7 @@ export default async function handler(req: any, res: any) {
             : "No specific past logs found.";
 
         // Generate Plan
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash", systemInstruction });
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest", systemInstruction });
         const fullPrompt = `PAST RELEVANT LOGS:\n${historicalContext}\n\nUSER REQUEST: ${userPrompt}`;
         const result = await model.generateContent(fullPrompt);
 

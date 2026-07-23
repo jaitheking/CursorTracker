@@ -15,7 +15,7 @@ export default async function handler(req: any, res: any) {
 
     try {
         // Generate the vector embedding using Gemini
-        const embeddingModel = genAI.getGenerativeModel({ model: "embedding-001" });
+        const embeddingModel = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
         const vectorResponse = await embeddingModel.embedContent(details);
         const embedding = vectorResponse.embedding.values;
 

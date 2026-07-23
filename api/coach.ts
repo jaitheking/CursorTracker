@@ -17,7 +17,7 @@ export default async function handler(req: any, res: any) {
         const systemInstruction = "You are an AI Performance Coach. Provide concise, actionable advice based on the user's past training logs.";
 
         // Vectorize the prompt to find relevant history
-        const embeddingModel = genAI.getGenerativeModel({ model: "embedding-001" });
+        const embeddingModel = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
         const promptVector = await embeddingModel.embedContent(userPrompt);
 
         // Search Supabase for similar past sessions

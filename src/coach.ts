@@ -114,10 +114,55 @@ function processCorosFile(file: File): void {
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
 
-            // Extract TCX metrics
-            const distanceMeters = parseFloat(xmlDoc.querySelector("DistanceMeters")?.textContent || "0");
-            const totalTimeSeconds = parseFloat(xmlDoc.querySelector("TotalTimeSeconds")?.textContent || "0");
-            const avgHeartRate = xmlDoc.querySelector("AverageHeartRateBpm Value")?.textContent || "N/A";
+            let distanceMeters = 0;
+            let totalTimeSeconds = 0;
+            let avgHeartRate: string | number = "N/A";
+
+            if (file.name.toLowerCase().endsWith('.tcx')) {
+                const laps = xmlDoc.querySelectorAll("Lap");
+                let totalHr = 0;
+                let hrCount = 0;
+                laps.forEach(lap => {
+                    distanceMeters += parseFloat(lap.querySelector("DistanceMeters")?.textContent || "0");
+                    totalTimeSeconds += parseFloat(lap.querySelector("TotalTimeSeconds")?.textContent || "0");
+                    const hrValue = lap.querySelector("AverageHeartRateBpm Value")?.textContent;
+                    if (hrValue) {
+                        totalHr += parseFloat(hrValue);
+                        hrCount++;
+                    }
+                });
+                if (hrCount > 0) {
+                    avgHeartRate = Math.round(totalHr / hrCount).toString();
+                }
+            } else if (file.name.toLowerCase().endsWith('.gpx')) {
+                const trkpts = xmlDoc.querySelectorAll("trkpt");
+                if (trkpts.length > 0) {
+                    const firstTimeStr = trkpts[0].querySelector("time")?.textContent;
+                    const lastTimeStr = trkpts[trkpts.length - 1].querySelector("time")?.textContent;
+                    if (firstTimeStr && lastTimeStr) {
+                        const firstTime = new Date(firstTimeStr).getTime();
+                        const lastTime = new Date(lastTimeStr).getTime();
+                        totalTimeSeconds = (lastTime - firstTime) / 1000;
+                    }
+
+                    for (let i = trkpts.length - 1; i >= 0; i--) {
+                        const distNodes = trkpts[i].getElementsByTagName("gpxdata:distance");
+                        if (distNodes.length > 0 && distNodes[0].textContent) {
+                            distanceMeters = parseFloat(distNodes[0].textContent);
+                            break;
+                        }
+                    }
+
+                    const hrNodes = xmlDoc.getElementsByTagName("gpxdata:hr");
+                    if (hrNodes.length > 0) {
+                        let totalHr = 0;
+                        for (let i = 0; i < hrNodes.length; i++) {
+                            totalHr += parseFloat(hrNodes[i].textContent || "0");
+                        }
+                        avgHeartRate = Math.round(totalHr / hrNodes.length).toString();
+                    }
+                }
+            }
 
             const distanceKm = (distanceMeters / 1000).toFixed(2);
             

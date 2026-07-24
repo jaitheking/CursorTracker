@@ -3,6 +3,7 @@ interface HistoricLog {
     date: string;
     type: string;
     summary: string;
+    vectorized?: boolean;
 }
 
 // Global View-State Boundaries
@@ -84,7 +85,13 @@ function renderCalendarView(): void {
         if (activeWorkouts.length > 0) {
             dayCell.classList.add('has-workout');
             
-            const indicators = activeWorkouts.map(w => w.type === 'Running' ? '🏃‍♂️' : '🏋️‍♂️').join('');
+            const indicators = activeWorkouts.map(w => {
+                let icon = w.type === 'Running' ? '🏃‍♂️' : '🏋️‍♂️';
+                if (w.vectorized) {
+                    icon += '✅';
+                }
+                return icon;
+            }).join('');
             const badge = document.createElement('span');
             badge.className = 'workout-indicator';
             badge.innerText = indicators;

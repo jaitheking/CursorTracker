@@ -23,12 +23,17 @@
                 <option value="Strength">Strength Training</option>
             </select>
 
+            <div style="margin-top: 10px;">
+                <label for="activityDate">Activity Date:</label>
+                <input type="date" id="activityDate" required>
+            </div>
+
             <!-- NEW: Direct File Upload Zone -->
             <div id="dropZone" class="file-drop-zone"
                 style="border: 2px dashed #ff5722; padding: 20px; text-align: center; margin: 15px 0; cursor: pointer; border-radius: 8px;">
-                <p>📁 Drag & Drop your Coros <strong>.tcx</strong> or <strong>.gpx</strong> file here</p>
+                <p>📁 Drag & Drop your Coros <strong>.tcx</strong>, <strong>.gpx</strong>, or Strength <strong>.txt</strong> file here</p>
                 <p><small>or click to browse files from your device</small></p>
-                <input type="file" id="corosFileInput" accept=".tcx,.gpx" style="display: none;">
+                <input type="file" id="corosFileInput" accept=".tcx,.gpx,.txt" style="display: none;">
             </div>
 
             <textarea id="logDetails" rows="5"
@@ -43,6 +48,11 @@
             <h3>2. Request Coaching Plan</h3>
             <textarea id="coachPrompt" rows="3"
                 placeholder="e.g., How should I structure my run tomorrow based on my last session?"></textarea>
+            <div class="preset-container" style="margin-top: 10px; margin-bottom: 10px;">
+                <button type="button" class="preset-btn preset-coach" data-val="Plan my next progressive running session.">Next Run</button>
+                <button type="button" class="preset-btn preset-coach" data-val="Plan my next strength circuit based on previous workouts.">Next Strength</button>
+                <button type="button" class="preset-btn preset-coach" data-val="I need a recovery day. What should I do?">Recovery Plan</button>
+            </div>
             <button id="generatePlanBtn" class="main-btn">⚡ Generate Plan</button>
         </div>
 

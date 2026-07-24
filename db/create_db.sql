@@ -4,10 +4,12 @@ CREATE EXTENSION IF NOT EXISTS vector;
 -- 2. Create the table for your training logs (both running and strength)
 CREATE TABLE training_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  activity_date date NOT NULL,
   activity_type text NOT NULL, -- e.g., 'Running' or 'Strength'
   details text NOT NULL, -- The manual text or Coros summary
   embedding vector(3072), -- Gemini's embedding size
-  created_at timestamp DEFAULT now()
+  created_at timestamp DEFAULT now(),
+  UNIQUE(activity_date, activity_type)
 );
 
 -- 3. Create a function to search for similar past workouts

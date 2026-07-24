@@ -104,6 +104,30 @@
         </div>
     </div>
 
+    <div id="aiCoachPanel" class="stats-panel hidden" style="position: relative;">
+        <button type="button" id="fullscreenCoachBtn" style="position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #fff; font-size: 1.2rem; cursor: pointer;">⛶</button>
+        <div class="metric-row-hero" style="margin-bottom: 10px;">
+            <div class="hero-box workout-hero">
+                <small>ACTIVE TRAINING PLAN</small>
+                <h1 id="aiCoachDate">No Active Plan</h1>
+            </div>
+        </div>
+        <div class="stats-grid" style="display: block;">
+            <div class="stat-card" style="text-align: left; padding: 20px;">
+                <pre id="aiCoachPlanContent" style="white-space: pre-wrap; font-family: inherit; margin: 0; line-height: 1.5; color: #ddd;">Generate a plan in the AI Coach section.</pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Overlay for AI Coach -->
+    <div id="fullscreenCoachOverlay" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 1000; overflow-y: auto; padding: 40px;">
+        <button type="button" id="closeFullscreenCoachBtn" style="position: absolute; top: 20px; right: 30px; background: transparent; border: none; color: #ff5722; font-size: 2rem; cursor: pointer;">&times;</button>
+        <h2 style="color: #ff5722; text-align: center; margin-bottom: 20px;">🧠 AI Performance Coach Plan</h2>
+        <div style="max-width: 800px; margin: 0 auto; background: #1a1a1a; padding: 30px; border-radius: 12px; border: 1px solid #333;">
+            <pre id="fullscreenCoachPlanContent" style="white-space: pre-wrap; font-family: inherit; margin: 0; line-height: 1.8; color: #fff; font-size: 1.1rem;"></pre>
+        </div>
+    </div>
+
     <footer class="app-footer">
         <p>© <span id="currentYear"></span> · Driven by Elite Performance Engine</p>
     </footer>

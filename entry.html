@@ -1,16 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cursor Performance Tracker - Jaiprashanth</title>
-    
+    <title>Log Session — Jaiprashanth</title>
+    <meta name="description" content="Log your running or strength training session.">
+
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#ff5722">
-
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
+
+<!-- Theme Toggle -->
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
 
 <div class="container">
     <!-- UPDATED: Cleaned terminology and removed redundant, split history links -->
@@ -90,5 +94,23 @@
 
 <script src="/scripts/app.js" defer></script>
 <script src="/scripts/sw-register.js" defer></script>
+<script>
+    // Theme persistence
+    (function() {
+        const t = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
+            btn?.addEventListener('click', () => {
+                const cur = document.documentElement.getAttribute('data-theme');
+                const next = cur === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                btn.textContent = next === 'dark' ? '☀️' : '🌙';
+            });
+        });
+    })();
+</script>
 </body>
 </html>

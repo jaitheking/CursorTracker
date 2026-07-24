@@ -1,69 +1,99 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Coach</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>AI Performance Coach — Jaiprashanth</title>
+    <meta name="description" content="AI-powered coaching plan generator. Log workouts and get personalized training plans.">
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#ff5722">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="/css/styles.css">
 </head>
 
 <body>
-    <div class="container">
-        <a href="/index.html" class="nav-link">⬅️ Back to Performance Dashboard</a>
-        <h2>🧠 AI Performance Coach</h2>
 
-        <!-- Section for manual Coros / Strength logging -->
-        <!-- Insert inside coach.html under the Vectorize panel -->
-        <div class="panel">
-            <h3>1. Log Workout (Auto-Parse or Manual)</h3>
+<!-- Theme Toggle -->
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
 
-            <label for="activityType">Activity Type:</label>
-            <select id="activityType">
-                <option value="Running">Running (Coros File / Data)</option>
-                <option value="Strength">Strength Training</option>
-            </select>
+<div class="container">
+    <a href="/index.html" class="nav-link">⬅️ Back to Dashboard</a>
+    <h2>🧠 AI Performance Coach</h2>
 
-            <div style="margin-top: 10px;">
-                <label for="activityDate">Activity Date:</label>
-                <input type="date" id="activityDate" required>
-            </div>
+    <!-- 1. Log Workout Panel -->
+    <div class="panel" style="margin-top: 16px;">
+        <h3>1 · Log Workout</h3>
 
-            <!-- NEW: Direct File Upload Zone -->
-            <div id="dropZone" class="file-drop-zone"
-                style="border: 2px dashed #ff5722; padding: 20px; text-align: center; margin: 15px 0; cursor: pointer; border-radius: 8px;">
-                <p>📁 Drag & Drop your Coros <strong>.tcx</strong>, <strong>.gpx</strong>, or Strength <strong>.txt</strong> file here</p>
-                <p><small>or click to browse files from your device</small></p>
-                <input type="file" id="corosFileInput" accept=".tcx,.gpx,.txt" style="display: none;">
-            </div>
+        <label for="activityType">Activity Type</label>
+        <select id="activityType">
+            <option value="Running">🏃‍♂️ Running (Coros File / Data)</option>
+            <option value="Strength">🏋️‍♂️ Strength Training</option>
+        </select>
 
-            <textarea id="logDetails" rows="5"
-                placeholder="Parsed workout metrics or manual notes will appear here..."></textarea>
+        <label for="activityDate">Activity Date</label>
+        <input type="date" id="activityDate" required>
 
-            <button id="saveLogBtn" class="main-btn">💾 Save to Vector DB</button>
-            <p id="logStatus"></p>
+        <!-- File Drop Zone -->
+        <div id="dropZone" class="file-drop-zone">
+            <p>📁 Drag &amp; Drop your Coros <strong>.tcx</strong>, <strong>.gpx</strong>, or Strength <strong>.txt</strong> log here</p>
+            <p><small>or click to browse files from your device</small></p>
+            <input type="file" id="corosFileInput" accept=".tcx,.gpx,.txt" style="display: none;">
         </div>
 
-        <!-- Section for interacting with the Coach -->
-        <div class="panel" style="margin-top: 20px;">
-            <h3>2. Request Coaching Plan</h3>
-            <textarea id="coachPrompt" rows="3"
-                placeholder="e.g., How should I structure my run tomorrow based on my last session?"></textarea>
-            <div class="preset-container" style="margin-top: 10px; margin-bottom: 10px;">
-                <button type="button" class="preset-btn preset-coach" data-val="Plan my next progressive running session.">Next Run</button>
-                <button type="button" class="preset-btn preset-coach" data-val="Plan my next strength circuit based on previous workouts.">Next Strength</button>
-                <button type="button" class="preset-btn preset-coach" data-val="I need a recovery day. What should I do?">Recovery Plan</button>
-            </div>
-            <button id="generatePlanBtn" class="main-btn">⚡ Generate Plan</button>
-        </div>
+        <label for="logDetails">Workout Details / Notes</label>
+        <textarea id="logDetails" rows="5"
+            placeholder="Parsed workout metrics or manual notes will appear here..."></textarea>
 
-        <div id="coachOutputPanel" class="hidden">
-            <h3>📋 Your Plan</h3>
-            <div id="coachPlanContent" style="white-space: pre-wrap;"></div>
-        </div>
+        <button id="saveLogBtn" class="main-btn">💾 Save to Vector DB</button>
+        <p id="logStatus"></p>
     </div>
 
-    <script src="scripts/coach.js"></script>
+    <!-- 2. Request Plan Panel -->
+    <div class="panel">
+        <h3>2 · Request Coaching Plan</h3>
+
+        <label for="coachPrompt">Prompt</label>
+        <textarea id="coachPrompt" rows="3"
+            placeholder="e.g., How should I structure my run tomorrow based on my last session?"></textarea>
+
+        <div class="preset-container" style="margin-top: 10px; margin-bottom: 4px;">
+            <button type="button" class="preset-btn preset-coach"
+                data-val="Plan my next progressive running session based on my history.">Next Run</button>
+            <button type="button" class="preset-btn preset-coach"
+                data-val="Plan my next strength circuit based on previous workouts.">Next Strength</button>
+            <button type="button" class="preset-btn preset-coach"
+                data-val="I need a recovery day. What should I do?">Recovery</button>
+        </div>
+
+        <button id="generatePlanBtn" class="main-btn">⚡ Generate Plan</button>
+    </div>
+
+    <!-- 3. Output Panel -->
+    <div id="coachOutputPanel" class="panel hidden">
+        <h3>📋 Your Training Plan</h3>
+        <div id="coachPlanContent"></div>
+    </div>
+</div>
+
+<script src="/scripts/coach.js"></script>
+<script>
+    (function() {
+        const t = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
+            btn?.addEventListener('click', () => {
+                const cur = document.documentElement.getAttribute('data-theme');
+                const next = cur === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                btn.textContent = next === 'dark' ? '☀️' : '🌙';
+            });
+        });
+    })();
+</script>
 </body>
 
 </html>

@@ -1,27 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workout History Dashboard - Jaiprashanth</title>
-    
+    <title>Workout History — Jaiprashanth</title>
+    <meta name="description" content="Calendar view of all workout history. Import, inspect, and manage past sessions.">
+
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#ff5722">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
 
+<!-- Theme Toggle -->
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+
 <div class="container">
     <div class="header">
-        <h2>📊 PERFORMANCE DASHBOARD</h2>
+        <h2>📅 WORKOUT HISTORY</h2>
         <div class="subtitle">Athlete: Jaiprashanth</div>
     </div>
 
-    <!-- UPDATED: Point navigation accurately back to your main landing analytics page -->
-    <a href="/index.html" class="nav-link">⬅️ Back to Performance Dashboard</a>
+    <a href="/index.html" class="nav-link">⬅️ Back to Dashboard</a>
 
     <div class="import-zone">
-        <label for="fileImporter" class="import-label">📥 Sync Older Logs from Phone Folder</label>
+        <label for="fileImporter" class="import-label">📥 Sync Older Logs from Device</label>
         <input type="file" id="fileImporter" accept=".txt" multiple style="display: none;">
         <button type="button" class="secondary-btn" onclick="document.getElementById('fileImporter').click()">Select Log Files</button>
         <span id="importStatus" class="import-status"></span>
@@ -54,5 +58,22 @@
 
 <script src="/scripts/history.js" defer></script>
 <script src="/scripts/sw-register.js" defer></script>
+<script>
+    (function() {
+        const t = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
+            btn?.addEventListener('click', () => {
+                const cur = document.documentElement.getAttribute('data-theme');
+                const next = cur === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                btn.textContent = next === 'dark' ? '☀️' : '🌙';
+            });
+        });
+    })();
+</script>
 </body>
 </html>

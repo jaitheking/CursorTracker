@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', (): void => {
         currentYearEl.innerText = new Date().getFullYear().toString();
     }
 
+    initializeThemeToggle();
+    initializeCollapsibles();
     initializeSegmentTabs();
     initializePeriodControls();
     initializeAICoach();
@@ -21,6 +23,45 @@ document.addEventListener('DOMContentLoaded', (): void => {
     // Core computation pass
     calculatePerformanceAnalytics();
 });
+
+/* ── Theme Toggle ── */
+function initializeThemeToggle(): void {
+    const btn = document.getElementById('themeToggle');
+    const saved = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+
+    btn?.addEventListener('click', () => {
+        const cur = document.documentElement.getAttribute('data-theme');
+        const next = cur === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+        if (btn) btn.textContent = next === 'dark' ? '☀️' : '🌙';
+    });
+}
+
+/* ── Collapsible Sections ── */
+function initializeCollapsibles(): void {
+    const sections = [
+        { toggleId: 'navHubToggle',       sectionId: 'navHubSection',        storeKey: 'collapse_navHub' },
+        { toggleId: 'trainingPlanToggle', sectionId: 'trainingPlanSection',  storeKey: 'collapse_trainingPlan' },
+    ];
+
+    sections.forEach(({ toggleId, sectionId, storeKey }) => {
+        const toggle  = document.getElementById(toggleId);
+        const section = document.getElementById(sectionId);
+        if (!toggle || !section) return;
+
+        // Restore saved state (default = expanded)
+        const isCollapsed = localStorage.getItem(storeKey) === 'true';
+        if (isCollapsed) section.classList.add('collapsed');
+
+        toggle.addEventListener('click', () => {
+            const nowCollapsed = section.classList.toggle('collapsed');
+            localStorage.setItem(storeKey, nowCollapsed.toString());
+        });
+    });
+}
 
 // Handle Back/Forward Cache (bfcache) restorations
 window.addEventListener('pageshow', (event: PageTransitionEvent) => {
@@ -30,37 +71,55 @@ window.addEventListener('pageshow', (event: PageTransitionEvent) => {
     }
 });
 
+/* ── AI Coach Plan Panel ── */
 function initializeAICoach(): void {
-    const aiCoachPanel = document.getElementById('aiCoachPanel');
-    const aiCoachDate = document.getElementById('aiCoachDate');
-    const aiCoachPlanContent = document.getElementById('aiCoachPlanContent');
-    const fullscreenOverlay = document.getElementById('fullscreenCoachOverlay');
-    const fullscreenContent = document.getElementById('fullscreenCoachPlanContent');
+    const hasContent   = document.getElementById('aiPlanHasContent');
+    const emptyState   = document.getElementById('aiPlanEmptyState');
+    const dateEl       = document.getElementById('aiCoachDate');
+    const planContent  = document.getElementById('aiCoachPlanContent');
+    const fullContent  = document.getElementById('fullscreenCoachPlanContent');
+    const badge        = document.getElementById('planStatusBadge');
+    const overlay      = document.getElementById('fullscreenCoachOverlay');
 
     const activePlan = localStorage.getItem('activeCoachingPlan');
     const activeDate = localStorage.getItem('activeCoachingPlanDate');
 
     if (activePlan) {
-        if (aiCoachPanel) aiCoachPanel.classList.remove('hidden');
-        if (aiCoachDate && activeDate) {
-            const dateObj = new Date(activeDate);
-            aiCoachDate.innerText = `Generated ${dateObj.toLocaleDateString()}`;
+        hasContent?.classList.remove('hidden');
+        emptyState?.classList.add('hidden');
+
+        if (badge) {
+            badge.textContent = 'Active';
+            badge.style.background = 'rgba(34,197,94,0.12)';
+            badge.style.color = '#22c55e';
+            badge.style.borderColor = 'rgba(34,197,94,0.3)';
         }
-        if (aiCoachPlanContent) {
-            aiCoachPlanContent.innerText = activePlan;
+        if (dateEl && activeDate) {
+            const d = new Date(activeDate);
+            dateEl.innerText = `Generated ${d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`;
         }
-        if (fullscreenContent) {
-            fullscreenContent.innerText = activePlan;
-        }
+        if (planContent) planContent.innerText = activePlan;
+        if (fullContent) fullContent.innerText = activePlan;
+    } else {
+        hasContent?.classList.add('hidden');
+        emptyState?.classList.remove('hidden');
+        if (badge) badge.textContent = 'No Plan';
     }
 
-    document.getElementById('fullscreenCoachBtn')?.addEventListener('click', () => {
-        fullscreenOverlay?.classList.remove('hidden');
-    });
+    // Avoid duplicate listeners on bfcache restore by cloning buttons
+    const fsBtn = document.getElementById('fullscreenCoachBtn');
+    if (fsBtn) {
+        const fresh = fsBtn.cloneNode(true) as HTMLElement;
+        fsBtn.parentNode?.replaceChild(fresh, fsBtn);
+        fresh.addEventListener('click', () => overlay?.classList.remove('hidden'));
+    }
 
-    document.getElementById('closeFullscreenCoachBtn')?.addEventListener('click', () => {
-        fullscreenOverlay?.classList.add('hidden');
-    });
+    const closeBtn = document.getElementById('closeFullscreenCoachBtn');
+    if (closeBtn) {
+        const fresh = closeBtn.cloneNode(true) as HTMLElement;
+        closeBtn.parentNode?.replaceChild(fresh, closeBtn);
+        fresh.addEventListener('click', () => overlay?.classList.add('hidden'));
+    }
 }
 
 function initializeSegmentTabs(): void {

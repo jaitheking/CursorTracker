@@ -1,17 +1,24 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ Performance Dashboard - Jaiprashanth</title>
-    
+    <title>⚡ Performance Dashboard — Jaiprashanth</title>
+    <meta name="description" content="Elite athlete performance dashboard for Jaiprashanth. Track running mileage, gym sessions, and AI coaching plans.">
+
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#ff5722">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
 
+<!-- Theme Toggle -->
+<button class="theme-toggle" id="themeToggle" title="Toggle light/dark theme">🌙</button>
+
 <div class="container">
+
+    <!-- Profile Header -->
     <div class="dashboard-profile">
         <div class="avatar">JP</div>
         <div class="profile-meta">
@@ -20,34 +27,47 @@
         </div>
     </div>
 
-    <!-- UPDATED: Navigation Hub now includes the AI Coach -->
-    <div class="navigation-hub">
-        <a href="/entry.html" class="hub-card">
-            <span class="hub-icon">📝</span>
-            <span class="hub-title">Log Session</span>
-        </a>
-        <a href="/history.html" class="hub-card">
-            <span class="hub-icon">📅</span>
-            <span class="hub-title">Calendar History</span>
-        </a>
-        <!-- NEW: AI Coach Navigation Card -->
-        <a href="/coach.html" class="hub-card">
-            <span class="hub-icon">🧠</span>
-            <span class="hub-title">AI Coach</span>
-        </a>
+    <!-- ── Collapsible: Navigation Hub ── -->
+    <div class="collapsible-section" id="navHubSection">
+        <div class="collapsible-header" id="navHubToggle">
+            <div class="collapsible-header-left">
+                <span class="collapsible-section-icon">🧭</span>
+                <span class="collapsible-section-title">Navigation</span>
+            </div>
+            <span class="collapsible-chevron">▼</span>
+        </div>
+        <div class="collapsible-body">
+            <div class="navigation-hub">
+                <a href="/entry.html" class="hub-card">
+                    <span class="hub-icon">📝</span>
+                    <span class="hub-title">Log Session</span>
+                </a>
+                <a href="/history.html" class="hub-card">
+                    <span class="hub-icon">📅</span>
+                    <span class="hub-title">Calendar History</span>
+                </a>
+                <a href="/coach.html" class="hub-card">
+                    <span class="hub-icon">🧠</span>
+                    <span class="hub-title">AI Coach</span>
+                </a>
+            </div>
+        </div>
     </div>
 
-    <div class="calendar-controls">
+    <!-- Period Controls -->
+    <div class="period-controls">
         <button type="button" id="prevPeriodBtn" class="control-btn">◀</button>
-        <h3 id="dashboardPeriodTitle">Loading Period...</h3>
+        <h3 id="dashboardPeriodTitle">Loading...</h3>
         <button type="button" id="nextPeriodBtn" class="control-btn">▶</button>
     </div>
 
+    <!-- Stats Tabs -->
     <div class="segment-tabs">
-        <button type="button" class="tab-btn active" id="tabRunning">🏃‍♂️ Running Analytics</button>
-        <button type="button" class="tab-btn" id="tabGym">🏋️‍♂️ Strength & Conditioning</button>
+        <button type="button" class="tab-btn active" id="tabRunning">🏃‍♂️ Running</button>
+        <button type="button" class="tab-btn" id="tabGym">🏋️‍♂️ Strength</button>
     </div>
 
+    <!-- Running Panel -->
     <div id="runningStatsPanel" class="stats-panel">
         <div class="metric-row-hero">
             <div class="hero-box">
@@ -59,72 +79,98 @@
                 <h1 id="runYearDist">0.00 <span class="unit">km</span></h1>
             </div>
         </div>
-
         <div class="stats-grid">
             <div class="stat-card">
-                <span class="label">Period Avg Pace</span>
+                <span class="label">Avg Pace</span>
                 <span class="value" id="runAvgPace">--:--</span>
             </div>
             <div class="stat-card">
-                <span class="label">All-Time Fastest Pace</span>
+                <span class="label">Fastest Pace</span>
                 <span class="value" id="runFastPace">--:--</span>
             </div>
             <div class="stat-card highlight">
-                <span class="label">Furthest Distance</span>
+                <span class="label">Furthest Run</span>
                 <span class="value" id="runMaxDist">0.00 km</span>
             </div>
         </div>
     </div>
 
+    <!-- Gym Panel -->
     <div id="gymStatsPanel" class="stats-panel hidden">
         <div class="metric-row-hero">
             <div class="hero-box workout-hero">
-                <small>ESTIMATED ACTIVE TIME</small>
+                <small>ACTIVE TIME</small>
                 <h1 id="gymTotalTime">0 <span class="unit">mins</span></h1>
             </div>
             <div class="hero-box workout-hero">
-                <small>PERIOD SESSIONS TRACKED</small>
+                <small>SESSIONS</small>
                 <h1 id="gymTotalCount">0 <span class="unit">logs</span></h1>
             </div>
         </div>
-
         <div class="stats-grid">
             <div class="stat-card">
-                <span class="label">Primary Target Split</span>
+                <span class="label">Top Split</span>
                 <span class="value" id="gymTopFocus">N/A</span>
             </div>
             <div class="stat-card">
-                <span class="label">Peak Body Weight</span>
+                <span class="label">Peak Weight</span>
                 <span class="value" id="gymMaxWeight">0.0 kg</span>
             </div>
             <div class="stat-card">
-                <span class="label">Optimal Lean Muscle</span>
+                <span class="label">Lean Muscle</span>
                 <span class="value" id="gymMaxMuscle">0.0 kg</span>
             </div>
         </div>
     </div>
 
-    <div id="aiCoachPanel" class="stats-panel hidden" style="position: relative;">
-        <button type="button" id="fullscreenCoachBtn" style="position: absolute; top: 10px; right: 10px; background: transparent; border: none; color: #fff; font-size: 1.2rem; cursor: pointer;">⛶</button>
-        <div class="metric-row-hero" style="margin-bottom: 10px;">
-            <div class="hero-box workout-hero">
-                <small>ACTIVE TRAINING PLAN</small>
-                <h1 id="aiCoachDate">No Active Plan</h1>
+    <!-- ── Collapsible: Active Training Plan ── -->
+    <div class="collapsible-section" id="trainingPlanSection" style="margin-top: 20px;">
+        <div class="collapsible-header" id="trainingPlanToggle">
+            <div class="collapsible-header-left">
+                <span class="collapsible-section-icon">🧠</span>
+                <span class="collapsible-section-title">Active Training Plan</span>
+                <span class="collapsible-section-badge" id="planStatusBadge">No Plan</span>
             </div>
+            <span class="collapsible-chevron">▼</span>
         </div>
-        <div class="stats-grid" style="display: block;">
-            <div class="stat-card" style="text-align: left; padding: 20px;">
-                <pre id="aiCoachPlanContent" style="white-space: pre-wrap; font-family: inherit; margin: 0; line-height: 1.5; color: #ddd;">Generate a plan in the AI Coach section.</pre>
+        <div class="collapsible-body ai-plan-section" id="trainingPlanBody">
+
+            <!-- Has Plan State -->
+            <div id="aiPlanHasContent" class="hidden">
+                <div class="plan-meta-row">
+                    <span class="plan-generated-date" id="aiCoachDate">—</span>
+                    <div class="plan-action-btns">
+                        <button type="button" class="plan-action-btn" id="fullscreenCoachBtn">⛶ Full View</button>
+                        <a href="/coach.html" class="plan-action-btn" style="text-decoration:none; display:inline-flex; align-items:center;">✏️ Update</a>
+                    </div>
+                </div>
+                <div class="plan-content-area">
+                    <pre id="aiCoachPlanContent" class="plan-text">Loading plan...</pre>
+                </div>
             </div>
+
+            <!-- Empty State -->
+            <div id="aiPlanEmptyState">
+                <div class="plan-empty-state">
+                    <span class="plan-empty-icon">🧠</span>
+                    <p class="plan-empty-text">No active training plan.<br>Generate one with the AI Coach.</p>
+                    <a href="/coach.html" class="plan-empty-link">Open AI Coach →</a>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- Fullscreen Overlay for AI Coach -->
-    <div id="fullscreenCoachOverlay" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); z-index: 1000; overflow-y: auto; padding: 40px;">
-        <button type="button" id="closeFullscreenCoachBtn" style="position: absolute; top: 20px; right: 30px; background: transparent; border: none; color: #ff5722; font-size: 2rem; cursor: pointer;">&times;</button>
-        <h2 style="color: #ff5722; text-align: center; margin-bottom: 20px;">🧠 AI Performance Coach Plan</h2>
-        <div style="max-width: 800px; margin: 0 auto; background: #1a1a1a; padding: 30px; border-radius: 12px; border: 1px solid #333;">
-            <pre id="fullscreenCoachPlanContent" style="white-space: pre-wrap; font-family: inherit; margin: 0; line-height: 1.8; color: #fff; font-size: 1.1rem;"></pre>
+    <!-- Fullscreen Overlay -->
+    <div id="fullscreenCoachOverlay" class="fullscreen-overlay hidden">
+        <div class="fullscreen-overlay-inner">
+            <div class="fullscreen-overlay-header">
+                <h2>🧠 Active Training Plan</h2>
+                <button type="button" class="fullscreen-close-btn" id="closeFullscreenCoachBtn">✕</button>
+            </div>
+            <div class="fullscreen-plan-card">
+                <pre id="fullscreenCoachPlanContent" class="fullscreen-plan-text"></pre>
+            </div>
         </div>
     </div>
 

@@ -16,10 +16,52 @@ document.addEventListener('DOMContentLoaded', (): void => {
 
     initializeSegmentTabs();
     initializePeriodControls();
+    initializeAICoach();
 
     // Core computation pass
     calculatePerformanceAnalytics();
 });
+
+// Handle Back/Forward Cache (bfcache) restorations
+window.addEventListener('pageshow', (event: PageTransitionEvent) => {
+    if (event.persisted) {
+        initializeAICoach();
+        calculatePerformanceAnalytics();
+    }
+});
+
+function initializeAICoach(): void {
+    const aiCoachPanel = document.getElementById('aiCoachPanel');
+    const aiCoachDate = document.getElementById('aiCoachDate');
+    const aiCoachPlanContent = document.getElementById('aiCoachPlanContent');
+    const fullscreenOverlay = document.getElementById('fullscreenCoachOverlay');
+    const fullscreenContent = document.getElementById('fullscreenCoachPlanContent');
+
+    const activePlan = localStorage.getItem('activeCoachingPlan');
+    const activeDate = localStorage.getItem('activeCoachingPlanDate');
+
+    if (activePlan) {
+        if (aiCoachPanel) aiCoachPanel.classList.remove('hidden');
+        if (aiCoachDate && activeDate) {
+            const dateObj = new Date(activeDate);
+            aiCoachDate.innerText = `Generated ${dateObj.toLocaleDateString()}`;
+        }
+        if (aiCoachPlanContent) {
+            aiCoachPlanContent.innerText = activePlan;
+        }
+        if (fullscreenContent) {
+            fullscreenContent.innerText = activePlan;
+        }
+    }
+
+    document.getElementById('fullscreenCoachBtn')?.addEventListener('click', () => {
+        fullscreenOverlay?.classList.remove('hidden');
+    });
+
+    document.getElementById('closeFullscreenCoachBtn')?.addEventListener('click', () => {
+        fullscreenOverlay?.classList.add('hidden');
+    });
+}
 
 function initializeSegmentTabs(): void {
     const btnRun = document.getElementById('tabRunning');

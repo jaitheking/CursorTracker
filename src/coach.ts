@@ -201,7 +201,8 @@ function processCorosFile(file: File): void {
                 const buffer = event.target.result as ArrayBuffer;
                 const fitData = parseFitFile(buffer);
                 
-                const formattedSummary = `Workout: Coros ${fitData.sport} Session
+                // Build the session summary header
+                let formattedSummary = `Workout: Coros ${fitData.sport} Session
 File: ${file.name}
 Distance: ${fitData.distanceKm} km
 Total Duration: ${fitData.totalTimeMins} mins ${fitData.totalTimeSecs} secs
@@ -211,8 +212,17 @@ Max Heart Rate: ${fitData.maxHeartRate} bpm
 Calories: ${fitData.calories} kcal
 Ascent: ${fitData.ascent} m
 Descent: ${fitData.descent} m
-Average Cadence: ${fitData.avgCadence} spm
-Notes: Automatically parsed from watch export (.fit).`;
+Average Cadence: ${fitData.avgCadence} spm`;
+
+                // Append lap splits if available
+                if (fitData.laps && fitData.laps.length > 0) {
+                    formattedSummary += `\n\nLap Splits (${fitData.laps.length} laps):`;
+                    fitData.laps.forEach(lap => {
+                        formattedSummary += `\n  Lap ${lap.lapNum}: ${lap.distanceKm} km | ${lap.timeMins}:${String(lap.timeSecs).padStart(2,'0')} | Pace: ${lap.paceStr} | HR: ${lap.avgHeartRate} bpm`;
+                    });
+                }
+
+                formattedSummary += `\nNotes: Automatically parsed from watch export (.fit).`;
 
                 if (detailsArea) detailsArea.value = formattedSummary;
                 if (statusText) statusText.innerText = "✅ .fit File parsed successfully! Ready to save to Vector DB.";

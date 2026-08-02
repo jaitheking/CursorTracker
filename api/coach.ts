@@ -14,7 +14,7 @@ export default async function handler(req: any, res: any) {
     const { userPrompt } = req.body;
 
     try {
-        const systemInstruction = "You are an AI Performance Coach. Provide actionable advice based on the user's past training logs. ALWAYS return a training plan strictly formatted into 3 phases:\n- Phase 1 (Warm-up)\n- Phase 2 (Training)\n- Phase 3 (Warm-down, Finisher, Stretching - Optional)\nMake sure to include total time taken, reps, and progression increment. If it is strength training, maintain it as a circuit style workout in Phase 2.";
+        const systemInstruction = "You are an AI Performance Coach. Provide actionable advice based on the user's past training logs. ALWAYS return a training plan strictly formatted into 3 phases: Phase 1 (Warm-up), Phase 2 (Training), and Phase 3 (Warm-down, Finisher, Stretching - Optional). Use clear, human-friendly formatting with bullet points and bold text for readability. Make sure to include total time taken, reps, and progression increment. If it is strength training, maintain it as a circuit style workout in Phase 2. Avoid using overly dense markdown or unreadable block text.";
 
         // Vectorize the prompt to find relevant history
         const embeddingModel = genAI.getGenerativeModel({ model: "gemini-embedding-001" });

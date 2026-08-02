@@ -90,8 +90,11 @@ function toggleFields(): void {
     if (typeEl.value === 'Running') {
         runningMetrics.classList.remove('hidden');
         gymMetrics.classList.add('hidden');
-    } else {
+    } else if (typeEl.value === 'Gym') {
         runningMetrics.classList.add('hidden');
+        gymMetrics.classList.remove('hidden');
+    } else if (typeEl.value === 'Hybrid') {
+        runningMetrics.classList.remove('hidden');
         gymMetrics.classList.remove('hidden');
     }
     saveCachedState();
@@ -130,9 +133,6 @@ function clearCachedState(): void {
 function generateSummary(): void {
     const date = (document.getElementById('logDate') as HTMLInputElement).value;
     const type = (document.getElementById('workoutType') as HTMLSelectElement).value;
-    const weight = (document.getElementById('weight') as HTMLInputElement).value;
-    const muscle = (document.getElementById('muscle') as HTMLInputElement).value;
-    const bf = (document.getElementById('bf') as HTMLInputElement).value;
     const desc = (document.getElementById('description') as HTMLTextAreaElement).value.trim();
     const comments = (document.getElementById('comments') as HTMLTextAreaElement).value.trim();
 
@@ -140,20 +140,16 @@ function generateSummary(): void {
     let summary = `📊 **WORKOUT LOG: ${date}**\n`;
     summary += `Type: ${type}\n`;
 
-    if (type === 'Running') {
+    if (type === 'Running' || type === 'Hybrid') {
         const dist = (document.getElementById('runDist') as HTMLInputElement).value;
         const pace = (document.getElementById('avgPace') as HTMLInputElement).value;
         if (dist) summary += `Distance: ${dist} km\n`;
         if (pace) summary += `Average Pace: ${pace} /km\n`;
-    } else {
+    } 
+    
+    if (type === 'Gym' || type === 'Hybrid') {
         const focus = (document.getElementById('gymFocus') as HTMLInputElement).value;
         if (focus) summary += `Focus: ${focus}\n`;
-    }
-
-    if (weight || muscle || bf) {
-        summary += `\nWeight: ${weight ? weight + ' kg' : 'N/A'}\n`;
-        summary += `Muscle Mass: ${muscle ? muscle + ' kg' : 'N/A'}\n`;
-        summary += `Body Fat: ${bf ? bf + '%' : 'N/A'}\n`;
     }
 
     if (desc) summary += `\nDetails:\n${desc}\n`;

@@ -36,16 +36,24 @@
 
         <!-- File Drop Zone -->
         <div id="dropZone" class="file-drop-zone">
-            <p>📁 Drag &amp; Drop your Coros <strong>.tcx</strong>, <strong>.gpx</strong>, or Strength <strong>.txt</strong> log here</p>
+            <p>📁 Drag &amp; Drop your Coros <strong>.fit</strong> or Strength <strong>.txt</strong> log here</p>
             <p><small>or click to browse files from your device</small></p>
-            <input type="file" id="corosFileInput" accept=".tcx,.gpx,.txt" style="display: none;">
+            <input type="file" id="corosFileInput" accept=".fit,.txt" style="display: none;">
+        </div>
+
+        <label>Body Composition (Optional)</label>
+        <div class="grid-3">
+            <input type="number" id="weight" step="0.1" placeholder="Wt (kg)">
+            <input type="number" id="muscle" step="0.1" placeholder="Musc (kg)">
+            <input type="number" id="bf" step="0.1" placeholder="BF %">
         </div>
 
         <label for="logDetails">Workout Details / Notes</label>
         <textarea id="logDetails" rows="5"
             placeholder="Parsed workout metrics or manual notes will appear here..."></textarea>
 
-        <button id="saveLogBtn" class="main-btn">💾 Save to Vector DB</button>
+        <button type="button" id="insertPlanBtn" class="secondary-btn" style="margin-bottom: 12px; width: 100%;">📋 Insert Active Training Plan</button>
+        <button id="saveLogBtn" class="main-btn" style="margin-top: 0;">💾 Save to Vector DB</button>
         <p id="logStatus"></p>
     </div>
 
@@ -76,7 +84,7 @@
     </div>
 </div>
 
-<script src="/scripts/coach.js"></script>
+<script type="module" src="/scripts/coach.js"></script>
 <script>
     (function() {
         const t = localStorage.getItem('theme') || 'dark';

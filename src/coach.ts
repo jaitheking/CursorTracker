@@ -1,6 +1,9 @@
+import { parseFitFile } from './fitParser.js';
+
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('saveLogBtn')?.addEventListener('click', saveVectorLog);
     document.getElementById('generatePlanBtn')?.addEventListener('click', fetchCoachPlan);
+    document.getElementById('insertPlanBtn')?.addEventListener('click', insertActivePlan);
 
     // Initialize activity date to today
     const dateInput = document.getElementById('activityDate') as HTMLInputElement | null;
@@ -29,11 +32,23 @@ async function saveVectorLog(): Promise<void> {
 
     statusText.innerText = "⏳ Vectorizing and saving to Supabase...";
 
+    const weight = (document.getElementById('weight') as HTMLInputElement)?.value;
+    const muscle = (document.getElementById('muscle') as HTMLInputElement)?.value;
+    const bf = (document.getElementById('bf') as HTMLInputElement)?.value;
+    
+    let finalDetails = detailsInput;
+    if (weight || muscle || bf) {
+        finalDetails += `\n\nBody Composition:`;
+        if (weight) finalDetails += `\nWeight: ${weight} kg`;
+        if (muscle) finalDetails += `\nMuscle Mass: ${muscle} kg`;
+        if (bf) finalDetails += `\nBody Fat: ${bf}%`;
+    }
+
     try {
         const response = await fetch('/api/save_log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ activity_date: dateInput, activity_type: typeInput, details: detailsInput })
+            body: JSON.stringify({ activity_date: dateInput, activity_type: typeInput, details: finalDetails })
         });
 
         const data = await response.json();
@@ -91,6 +106,18 @@ async function fetchCoachPlan(): Promise<void> {
     }
 }
 
+function insertActivePlan(): void {
+    const plan = localStorage.getItem('activeCoachingPlan');
+    if (!plan) {
+        alert("No active training plan found. Generate one first.");
+        return;
+    }
+    const textArea = document.getElementById('logDetails') as HTMLTextAreaElement | null;
+    if (textArea) {
+        textArea.value = textArea.value + (textArea.value ? '\n\n' : '') + "--- ACTIVE PLAN ---\n" + plan;
+    }
+}
+
 // Add file handling logic to your existing src/coach.ts
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -128,133 +155,81 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
- * Reads and parses exported Coros TCX XML files directly in the browser.
+ * Reads and parses exported Coros FIT and TXT files directly in the browser.
  */
 function processCorosFile(file: File): void {
     const statusText = document.getElementById('logStatus');
     const detailsArea = document.getElementById('logDetails') as HTMLTextAreaElement;
 
-    if (!file.name.endsWith('.tcx') && !file.name.endsWith('.gpx') && !file.name.endsWith('.txt')) {
-        if (statusText) statusText.innerText = "❌ Please upload a valid .tcx, .gpx, or .txt file.";
+    if (!file.name.toLowerCase().endsWith('.fit') && !file.name.toLowerCase().endsWith('.txt')) {
+        if (statusText) statusText.innerText = "❌ Please upload a valid .fit or .txt file.";
         return;
     }
 
     const reader = new FileReader();
-    reader.onload = (event: ProgressEvent<FileReader>) => {
-        try {
+    
+    if (file.name.toLowerCase().endsWith('.txt')) {
+        reader.onload = (event: ProgressEvent<FileReader>) => {
             const fileContent = event.target?.result as string;
+            if (detailsArea) detailsArea.value = fileContent;
+            if (statusText) statusText.innerText = "✅ Text log parsed successfully! Ready to save to Vector DB.";
             
-            if (file.name.toLowerCase().endsWith('.txt')) {
-                if (detailsArea) {
-                    detailsArea.value = fileContent;
+            const dateMatch = fileContent.match(/WORKOUT LOG:\s*([0-9\-]+)/i);
+            if (dateMatch) {
+                const dateInput = document.getElementById('activityDate') as HTMLInputElement;
+                if (dateInput) dateInput.value = dateMatch[1].trim();
+            }
+            const typeMatch = fileContent.match(/Type:\s*([a-zA-Z\/ ]+)/i);
+            if (typeMatch) {
+                const parsedType = typeMatch[1].trim();
+                const typeInput = document.getElementById('activityType') as HTMLSelectElement;
+                if (typeInput) {
+                    if (parsedType.toLowerCase().includes('run')) {
+                        typeInput.value = 'Running';
+                    } else {
+                        typeInput.value = 'Strength';
+                    }
                 }
-                if (statusText) {
-                    statusText.innerText = "✅ Text log parsed successfully! Ready to save to Vector DB.";
-                }
+            }
+        };
+        reader.readAsText(file);
+    } else {
+        // FIT file parsing
+        reader.onload = (event: ProgressEvent<FileReader>) => {
+            try {
+                if (!event.target?.result) return;
+                const buffer = event.target.result as ArrayBuffer;
+                const fitData = parseFitFile(buffer);
                 
-                // Attempt to auto-fill the date and type if the file format is standard from entry.html
-                const dateMatch = fileContent.match(/WORKOUT LOG:\s*([0-9\-]+)/i);
-                if (dateMatch) {
-                    const dateInput = document.getElementById('activityDate') as HTMLInputElement;
-                    if (dateInput) dateInput.value = dateMatch[1].trim();
-                }
-                const typeMatch = fileContent.match(/Type:\s*([a-zA-Z\/ ]+)/i);
-                if (typeMatch) {
-                    const parsedType = typeMatch[1].trim();
-                    const typeInput = document.getElementById('activityType') as HTMLSelectElement;
-                    if (typeInput) {
-                        if (parsedType.toLowerCase().includes('run')) {
-                            typeInput.value = 'Running';
-                        } else {
-                            typeInput.value = 'Strength';
-                        }
-                    }
-                }
-                return;
-            }
-
-            const xmlContent = fileContent;
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlContent, "text/xml");
-
-            let distanceMeters = 0;
-            let totalTimeSeconds = 0;
-            let avgHeartRate: string | number = "N/A";
-
-            if (file.name.toLowerCase().endsWith('.tcx')) {
-                const laps = xmlDoc.querySelectorAll("Lap");
-                let totalHr = 0;
-                let hrCount = 0;
-                laps.forEach(lap => {
-                    distanceMeters += parseFloat(lap.querySelector("DistanceMeters")?.textContent || "0");
-                    totalTimeSeconds += parseFloat(lap.querySelector("TotalTimeSeconds")?.textContent || "0");
-                    const hrValue = lap.querySelector("AverageHeartRateBpm Value")?.textContent;
-                    if (hrValue) {
-                        totalHr += parseFloat(hrValue);
-                        hrCount++;
-                    }
-                });
-                if (hrCount > 0) {
-                    avgHeartRate = Math.round(totalHr / hrCount).toString();
-                }
-            } else if (file.name.toLowerCase().endsWith('.gpx')) {
-                const trkpts = xmlDoc.querySelectorAll("trkpt");
-                if (trkpts.length > 0) {
-                    const firstTimeStr = trkpts[0].querySelector("time")?.textContent;
-                    const lastTimeStr = trkpts[trkpts.length - 1].querySelector("time")?.textContent;
-                    if (firstTimeStr && lastTimeStr) {
-                        const firstTime = new Date(firstTimeStr).getTime();
-                        const lastTime = new Date(lastTimeStr).getTime();
-                        totalTimeSeconds = (lastTime - firstTime) / 1000;
-                    }
-
-                    for (let i = trkpts.length - 1; i >= 0; i--) {
-                        const distNodes = trkpts[i].getElementsByTagName("gpxdata:distance");
-                        if (distNodes.length > 0 && distNodes[0].textContent) {
-                            distanceMeters = parseFloat(distNodes[0].textContent);
-                            break;
-                        }
-                    }
-
-                    const hrNodes = xmlDoc.getElementsByTagName("gpxdata:hr");
-                    if (hrNodes.length > 0) {
-                        let totalHr = 0;
-                        for (let i = 0; i < hrNodes.length; i++) {
-                            totalHr += parseFloat(hrNodes[i].textContent || "0");
-                        }
-                        avgHeartRate = Math.round(totalHr / hrNodes.length).toString();
-                    }
-                }
-            }
-
-            const distanceKm = (distanceMeters / 1000).toFixed(2);
-            
-            // Calculate Pace (min/km)
-            let paceStr = "N/A";
-            if (distanceMeters > 0 && totalTimeSeconds > 0) {
-                const paceSecondsPerKm = totalTimeSeconds / (distanceMeters / 1000);
-                const minutes = Math.floor(paceSecondsPerKm / 60);
-                const seconds = Math.floor(paceSecondsPerKm % 60);
-                paceStr = `${minutes}:${seconds < 10 ? '0' : ''}${seconds} /km`;
-            }
-
-            // Build automated structured summary
-            const formattedSummary = `Workout: Coros Running Session
+                const formattedSummary = `Workout: Coros ${fitData.sport} Session
 File: ${file.name}
-Distance: ${distanceKm} km
-Total Duration: ${Math.floor(totalTimeSeconds / 60)} mins ${Math.floor(totalTimeSeconds % 60)} secs
-Average Pace: ${paceStr}
-Average Heart Rate: ${avgHeartRate} bpm
-Notes: Automatically parsed from watch export.`;
+Distance: ${fitData.distanceKm} km
+Total Duration: ${fitData.totalTimeMins} mins ${fitData.totalTimeSecs} secs
+Average Pace: ${fitData.paceStr}
+Average Heart Rate: ${fitData.avgHeartRate} bpm
+Max Heart Rate: ${fitData.maxHeartRate} bpm
+Calories: ${fitData.calories} kcal
+Ascent: ${fitData.ascent} m
+Descent: ${fitData.descent} m
+Average Cadence: ${fitData.avgCadence} spm
+Notes: Automatically parsed from watch export (.fit).`;
 
-            if (detailsArea) detailsArea.value = formattedSummary;
-            if (statusText) statusText.innerText = "✅ File parsed successfully! Ready to save to Vector DB.";
-
-        } catch (err) {
-            console.error("Error parsing TCX file:", err);
-            if (statusText) statusText.innerText = "❌ Failed to parse watch file format.";
-        }
-    };
-
-    reader.readAsText(file);
+                if (detailsArea) detailsArea.value = formattedSummary;
+                if (statusText) statusText.innerText = "✅ .fit File parsed successfully! Ready to save to Vector DB.";
+                
+                const typeInput = document.getElementById('activityType') as HTMLSelectElement;
+                if (typeInput) {
+                    if (fitData.sport.toLowerCase().includes('run')) {
+                        typeInput.value = 'Running';
+                    } else {
+                        typeInput.value = 'Strength';
+                    }
+                }
+            } catch (err) {
+                console.error("Error parsing FIT file:", err);
+                if (statusText) statusText.innerText = "❌ Failed to parse .fit file format.";
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
 }

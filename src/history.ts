@@ -43,10 +43,13 @@ function initializeCalendarControls(): void {
  * Primary Layout Engine: Calculates grid indexes, queries local data arrays,
  * and dynamically renders individual date cells.
  */
-function renderCalendarView(): void {
+async function renderCalendarView(): Promise<void> {
     const daysGrid = document.getElementById('calendarDaysGrid');
     const monthTitle = document.getElementById('calendarMonthTitle');
+    const importStatus = document.getElementById('importStatus');
     if (!daysGrid || !monthTitle) return;
+
+    if (importStatus) importStatus.innerText = "🔄 Syncing with DB...";
 
     const months = [
         "January", "February", "March", "April", "May", "June", 
@@ -56,7 +59,36 @@ function renderCalendarView(): void {
     monthTitle.innerText = `${months[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
 
     const rawHistory = localStorage.getItem('cursor_workout_history');
-    const logs: HistoricLog[] = rawHistory ? JSON.parse(rawHistory) : [];
+    let logs: HistoricLog[] = rawHistory ? JSON.parse(rawHistory) : [];
+
+    try {
+        const response = await fetch('/api/get_logs');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.logs) {
+                data.logs.forEach((dbLog: any) => {
+                    const existingLogIndex = logs.findIndex(l => l.date === dbLog.activity_date && l.type === dbLog.activity_type);
+                    if (existingLogIndex >= 0) {
+                        logs[existingLogIndex].vectorized = true;
+                        logs[existingLogIndex].summary = dbLog.details;
+                    } else {
+                        logs.push({
+                            id: `db-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                            date: dbLog.activity_date,
+                            type: dbLog.activity_type,
+                            summary: dbLog.details,
+                            vectorized: true
+                        });
+                    }
+                });
+                localStorage.setItem('cursor_workout_history', JSON.stringify(logs));
+            }
+        }
+    } catch (err) {
+        console.error("Failed to sync from Supabase:", err);
+    }
+
+    if (importStatus) importStatus.innerText = "";
 
     daysGrid.innerHTML = '';
 
@@ -86,7 +118,7 @@ function renderCalendarView(): void {
             dayCell.classList.add('has-workout');
             
             const indicators = activeWorkouts.map(w => {
-                let icon = w.type === 'Running' ? '🏃‍♂️' : '🏋️‍♂️';
+                let icon = w.type === 'Running' ? '🏃‍♂️' : (w.type === 'Hybrid' ? '🏃‍♂️🏋️‍♂️' : '🏋️‍♂️');
                 if (w.vectorized) {
                     icon += '✅';
                 }
@@ -152,7 +184,9 @@ function setupFileImporter(): void {
                     const parsedDate = dateMatch[1].trim();
                     let parsedType = typeMatch ? typeMatch[1].trim() : 'Gym';
                     
-                    if (parsedType.toLowerCase().includes('run')) {
+                    if (parsedType.toLowerCase().includes('hybrid')) {
+                        parsedType = 'Hybrid';
+                    } else if (parsedType.toLowerCase().includes('run')) {
                         parsedType = 'Running';
                     } else {
                         parsedType = 'Gym';
@@ -213,11 +247,26 @@ function openInspector(log: HistoricLog): void {
         <div class="inspector-actions">
             <button type="button" class="inline-save-btn" id="inlineSaveBtn">💾 Update Log</button>
             <button type="button" class="inline-delete-btn" id="inlineDeleteBtn">🗑️ Delete</button>
+            ${log.vectorized ? `<button type="button" class="inline-save-btn" id="downloadLogBtn" style="background:var(--accent);border-color:var(--accent);color:#fff;">📥 Download Log</button>` : ''}
         </div>
     `;
 
     document.getElementById('inlineSaveBtn')?.addEventListener('click', saveModifiedLog);
     document.getElementById('inlineDeleteBtn')?.addEventListener('click', deleteIndividualLog);
+    document.getElementById('downloadLogBtn')?.addEventListener('click', () => downloadSupabaseLog(log));
+}
+
+function downloadSupabaseLog(log: HistoricLog): void {
+    const filename = `${log.date}.txt`;
+    const blob = new Blob([log.summary], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 function closeInspector(): void {

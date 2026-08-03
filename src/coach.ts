@@ -35,7 +35,7 @@ async function saveVectorLog(): Promise<void> {
     const weight = (document.getElementById('weight') as HTMLInputElement)?.value;
     const muscle = (document.getElementById('muscle') as HTMLInputElement)?.value;
     const bf = (document.getElementById('bf') as HTMLInputElement)?.value;
-    
+
     let finalDetails = detailsInput;
     if (weight || muscle || bf) {
         finalDetails += `\n\nBody Composition:`;
@@ -167,13 +167,13 @@ function processCorosFile(file: File): void {
     }
 
     const reader = new FileReader();
-    
+
     if (file.name.toLowerCase().endsWith('.txt')) {
         reader.onload = (event: ProgressEvent<FileReader>) => {
             const fileContent = event.target?.result as string;
             if (detailsArea) detailsArea.value = fileContent;
             if (statusText) statusText.innerText = "✅ Text log parsed successfully! Ready to save to Vector DB.";
-            
+
             const dateMatch = fileContent.match(/WORKOUT LOG:\s*([0-9\-]+)/i);
             if (dateMatch) {
                 const dateInput = document.getElementById('activityDate') as HTMLInputElement;
@@ -200,7 +200,7 @@ function processCorosFile(file: File): void {
                 if (!event.target?.result) return;
                 const buffer = event.target.result as ArrayBuffer;
                 const fitData = parseFitFile(buffer);
-                
+
                 // Build the session summary header
                 let formattedSummary = `Workout: Coros ${fitData.sport} Session
 File: ${file.name}
@@ -218,7 +218,7 @@ Average Cadence: ${fitData.avgCadence} spm`;
                 if (fitData.laps && fitData.laps.length > 0) {
                     formattedSummary += `\n\nLap Splits (${fitData.laps.length} laps):`;
                     fitData.laps.forEach(lap => {
-                        formattedSummary += `\n  Lap ${lap.lapNum}: ${lap.distanceKm} km | ${lap.timeMins}:${String(lap.timeSecs).padStart(2,'0')} | Pace: ${lap.paceStr} | HR: ${lap.avgHeartRate} bpm`;
+                        formattedSummary += `\n  Lap ${lap.lapNum}: ${lap.distanceKm} km | ${lap.timeMins}:${String(lap.timeSecs).padStart(2, '0')} | Pace: ${lap.paceStr} | HR: ${lap.avgHeartRate} bpm`;
                     });
                 }
 
@@ -226,7 +226,7 @@ Average Cadence: ${fitData.avgCadence} spm`;
 
                 if (detailsArea) detailsArea.value = formattedSummary;
                 if (statusText) statusText.innerText = "✅ .fit File parsed successfully! Ready to save to Vector DB.";
-                
+
                 const typeInput = document.getElementById('activityType') as HTMLSelectElement;
                 if (typeInput) {
                     if (fitData.sport.toLowerCase().includes('run')) {

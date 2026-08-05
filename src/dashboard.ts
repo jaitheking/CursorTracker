@@ -71,6 +71,88 @@ window.addEventListener('pageshow', (event: PageTransitionEvent) => {
     }
 });
 
+/* ── Lightweight Markdown Renderer ── */
+/**
+ * Converts a subset of markdown to safe HTML for rendering AI coach plans.
+ * Handles: headings (##, ###), bold (**), bullet lists, numbered lists,
+ * horizontal rules (---), and preserves line breaks.
+ */
+function renderMarkdown(md: string): string {
+    if (!md) return '';
+
+    const lines = md.split('\n');
+    const html: string[] = [];
+    let inList = false;
+    let listType = '';
+
+    const closeList = () => {
+        if (inList) {
+            html.push(listType === 'ul' ? '</ul>' : '</ol>');
+            inList = false;
+            listType = '';
+        }
+    };
+
+    for (let raw of lines) {
+        const line = raw.trimEnd();
+
+        // Horizontal rule
+        if (/^[-*_]{3,}$/.test(line.trim())) {
+            closeList();
+            html.push('<hr class="md-hr">');
+            continue;
+        }
+
+        // Headings
+        const h3 = line.match(/^###\s+(.+)/);
+        const h2 = line.match(/^##\s+(.+)/);
+        const h1 = line.match(/^#\s+(.+)/);
+        if (h1) { closeList(); html.push(`<h3 class="md-h1">${inlineFormat(h1[1])}</h3>`); continue; }
+        if (h2) { closeList(); html.push(`<h4 class="md-h2">${inlineFormat(h2[1])}</h4>`); continue; }
+        if (h3) { closeList(); html.push(`<h5 class="md-h3">${inlineFormat(h3[1])}</h5>`); continue; }
+
+        // Unordered list
+        const ul = line.match(/^[\-\*\+]\s+(.+)/);
+        if (ul) {
+            if (!inList || listType !== 'ul') { closeList(); html.push('<ul class="md-ul">'); inList = true; listType = 'ul'; }
+            html.push(`<li>${inlineFormat(ul[1])}</li>`);
+            continue;
+        }
+
+        // Ordered list
+        const ol = line.match(/^\d+\.\s+(.+)/);
+        if (ol) {
+            if (!inList || listType !== 'ol') { closeList(); html.push('<ol class="md-ol">'); inList = true; listType = 'ol'; }
+            html.push(`<li>${inlineFormat(ol[1])}</li>`);
+            continue;
+        }
+
+        // Empty line — close list context and add spacing
+        if (line.trim() === '') {
+            closeList();
+            html.push('<br>');
+            continue;
+        }
+
+        // Normal paragraph
+        closeList();
+        html.push(`<p class="md-p">${inlineFormat(line)}</p>`);
+    }
+
+    closeList();
+    return html.join('');
+}
+
+/** Apply inline formatting: bold, italic, inline-code */
+function inlineFormat(text: string): string {
+    return text
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') // escape HTML first
+        .replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/`(.+?)`/g, '<code class="md-code">$1</code>');
+}
+
 /* ── AI Coach Plan Panel ── */
 function initializeAICoach(): void {
     const hasContent   = document.getElementById('aiPlanHasContent');
@@ -98,8 +180,8 @@ function initializeAICoach(): void {
             const d = new Date(activeDate);
             dateEl.innerText = `Generated ${d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`;
         }
-        if (planContent) planContent.innerText = activePlan;
-        if (fullContent) fullContent.innerText = activePlan;
+        if (planContent) planContent.innerHTML = renderMarkdown(activePlan);
+        if (fullContent) fullContent.innerHTML = renderMarkdown(activePlan);
     } else {
         hasContent?.classList.add('hidden');
         emptyState?.classList.remove('hidden');

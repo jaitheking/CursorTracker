@@ -11,6 +11,25 @@ document.addEventListener('DOMContentLoaded', () => {
         dateInput.valueAsDate = new Date();
     }
 
+    // Restore & persist model selections
+    const chatModelSelect = document.getElementById('chatModelSelect') as HTMLSelectElement | null;
+    const embeddingModelSelect = document.getElementById('embeddingModelSelect') as HTMLSelectElement | null;
+
+    if (chatModelSelect) {
+        const saved = localStorage.getItem('ai_chat_model');
+        if (saved) chatModelSelect.value = saved;
+        chatModelSelect.addEventListener('change', () => {
+            localStorage.setItem('ai_chat_model', chatModelSelect.value);
+        });
+    }
+    if (embeddingModelSelect) {
+        const saved = localStorage.getItem('ai_embedding_model');
+        if (saved) embeddingModelSelect.value = saved;
+        embeddingModelSelect.addEventListener('change', () => {
+            localStorage.setItem('ai_embedding_model', embeddingModelSelect.value);
+        });
+    }
+
     // Preset prompts
     document.querySelectorAll('.preset-coach').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -27,10 +46,13 @@ async function saveVectorLog(): Promise<void> {
     const dateInput = (document.getElementById('activityDate') as HTMLInputElement).value;
     const detailsInput = (document.getElementById('logDetails') as HTMLTextAreaElement).value;
     const statusText = document.getElementById('logStatus');
+    const embeddingModel = (document.getElementById('embeddingModelSelect') as HTMLSelectElement)?.value
+        || localStorage.getItem('ai_embedding_model')
+        || 'gemini-embedding-exp-03-07';
 
     if (!detailsInput.trim() || !statusText || !dateInput) return;
 
-    statusText.innerText = "⏳ Vectorizing and saving to Supabase...";
+    statusText.innerText = `⏳ Vectorizing with ${embeddingModel} and saving to Supabase...`;
 
     const weight = (document.getElementById('weight') as HTMLInputElement)?.value;
     const muscle = (document.getElementById('muscle') as HTMLInputElement)?.value;
@@ -48,7 +70,7 @@ async function saveVectorLog(): Promise<void> {
         const response = await fetch('/api/save_log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ activity_date: dateInput, activity_type: typeInput, details: finalDetails })
+            body: JSON.stringify({ activity_date: dateInput, activity_type: typeInput, details: finalDetails, embeddingModel })
         });
 
         const data = await response.json();
@@ -80,17 +102,23 @@ async function fetchCoachPlan(): Promise<void> {
     const promptInput = (document.getElementById('coachPrompt') as HTMLTextAreaElement).value;
     const outputPanel = document.getElementById('coachOutputPanel');
     const planContent = document.getElementById('coachPlanContent');
+    const chatModel = (document.getElementById('chatModelSelect') as HTMLSelectElement)?.value
+        || localStorage.getItem('ai_chat_model')
+        || 'gemini-2.5-flash';
+    const embeddingModel = (document.getElementById('embeddingModelSelect') as HTMLSelectElement)?.value
+        || localStorage.getItem('ai_embedding_model')
+        || 'gemini-embedding-exp-03-07';
 
     if (!promptInput.trim() || !planContent || !outputPanel) return;
 
     outputPanel.classList.remove('hidden');
-    planContent.innerText = "⏳ Retrieving vector history and generating plan...";
+    planContent.innerText = `⏳ Retrieving vector history (${embeddingModel}) and generating plan with ${chatModel}...`;
 
     try {
         const response = await fetch('/api/coach', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userPrompt: promptInput })
+            body: JSON.stringify({ userPrompt: promptInput, chatModel, embeddingModel })
         });
 
         const data = await response.json();

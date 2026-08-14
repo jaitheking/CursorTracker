@@ -11,7 +11,9 @@ export default async function handler(req: any, res: any) {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-    const { userPrompt } = req.body;
+    const { userPrompt, chatModel, embeddingModel } = req.body;
+    const resolvedChatModel: string = chatModel || 'gemini-2.5-flash';
+    const resolvedEmbeddingModel: string = embeddingModel || 'gemini-embedding-exp-03-07';
 
     try {
         const systemInstruction = `
@@ -35,8 +37,8 @@ ALWAYS return training plans strictly structured into 3 phases:
 `;
 
         // Vectorize the prompt to find relevant history
-        const embeddingModel = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
-        const promptVector = await embeddingModel.embedContent(userPrompt);
+        const embeddingModelInstance = genAI.getGenerativeModel({ model: resolvedEmbeddingModel });
+        const promptVector = await embeddingModelInstance.embedContent(userPrompt);
 
         // Search Supabase for similar past sessions
         const { data: pastLogs } = await supabase.rpc('match_training_logs', {
@@ -50,7 +52,7 @@ ALWAYS return training plans strictly structured into 3 phases:
             : "No specific past logs found.";
 
         // Generate Plan
-        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest", systemInstruction });
+        const model = genAI.getGenerativeModel({ model: resolvedChatModel, systemInstruction });
         const fullPrompt = `PAST RELEVANT LOGS:\n${historicalContext}\n\nUSER REQUEST: ${userPrompt}`;
         const result = await model.generateContent(fullPrompt);
 

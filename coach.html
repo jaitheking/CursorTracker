@@ -62,6 +62,27 @@
     <div class="panel">
         <h3>2 · Request Coaching Plan</h3>
 
+        <!-- AI Model Selection -->
+        <div class="grid-2" style="margin-bottom: 14px;">
+            <div>
+                <label for="chatModelSelect" style="font-size: 0.8rem; margin-bottom: 4px; display: block;">🤖 AI Chat Model</label>
+                <select id="chatModelSelect" title="Select the generative AI model for coaching plans">
+                    <option value="gemini-3.7-flash" selected>Gemini 3.7 Flash</option>
+                    <option value="gemini-3.6-flash" >Gemini 3.6 Flash ✨</option>
+                    <option value="gemini-2.5-flash" >Gemini 2.5 Flash</option>
+                    <option value="gemini-2.5-pro">Gemini 2.5 Pro 🧠</option>
+                    <option value="gemini-flash-latest">Gemini Flash (Stable)</option>
+                </select>
+            </div>
+            <div>
+                <label for="embeddingModelSelect" style="font-size: 0.8rem; margin-bottom: 4px; display: block;">📐 Vector Embedding Model <span style="opacity: 0.6; font-size: 0.7rem;">(3072-dim)</span></label>
+                <select id="embeddingModelSelect" title="Select the embedding model for vector search">
+                    <option value="gemini-embedding-exp-03-07" selected>gemini-embedding-exp-03-07 ✨ (Latest)</option>
+                    <option value="gemini-embedding-001">gemini-embedding-001</option>
+                </select>
+            </div>
+        </div>
+
         <label for="coachPrompt">Prompt</label>
         <textarea id="coachPrompt" rows="3"
             placeholder="e.g., How should I structure my run tomorrow based on my last session?"></textarea>

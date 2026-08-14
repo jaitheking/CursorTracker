@@ -11,12 +11,13 @@ export default async function handler(req: any, res: any) {
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY);
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-    const { activity_date, activity_type, details } = req.body;
+    const { activity_date, activity_type, details, embeddingModel } = req.body;
+    const resolvedEmbeddingModel: string = embeddingModel || 'gemini-embedding-exp-03-07';
 
     try {
         // Generate the vector embedding using Gemini
-        const embeddingModel = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
-        const vectorResponse = await embeddingModel.embedContent(details);
+        const embeddingModelInstance = genAI.getGenerativeModel({ model: resolvedEmbeddingModel });
+        const vectorResponse = await embeddingModelInstance.embedContent(details);
         const embedding = vectorResponse.embedding.values;
 
         // Save to Supabase

@@ -104,7 +104,7 @@ async function fetchCoachPlan(): Promise<void> {
     const planContent = document.getElementById('coachPlanContent');
     const chatModel = (document.getElementById('chatModelSelect') as HTMLSelectElement)?.value
         || localStorage.getItem('ai_chat_model')
-        || 'gemini-2.5-flash';
+        || 'gemini-3.7-flash';
     const embeddingModel = (document.getElementById('embeddingModelSelect') as HTMLSelectElement)?.value
         || localStorage.getItem('ai_embedding_model')
         || 'gemini-embedding-exp-03-07';

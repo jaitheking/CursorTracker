@@ -21,46 +21,9 @@
     <a href="/index.html" class="nav-link">⬅️ Back to Dashboard</a>
     <h2>🧠 AI Performance Coach</h2>
 
-    <!-- 1. Log Workout Panel -->
+    <!-- 1. Weekly Coaching Plan Panel -->
     <div class="panel" style="margin-top: 16px;">
-        <h3>1 · Log Workout</h3>
-
-        <label for="activityType">Activity Type</label>
-        <select id="activityType">
-            <option value="Running">🏃‍♂️ Running (Coros File / Data)</option>
-            <option value="Strength">🏋️‍♂️ Strength Training</option>
-            <option value="Hybrid">🏃‍♂️🏋️‍♂️ Hybrid (Run + Strength)</option>
-        </select>
-
-        <label for="activityDate">Activity Date</label>
-        <input type="date" id="activityDate" required>
-
-        <!-- File Drop Zone -->
-        <div id="dropZone" class="file-drop-zone">
-            <p>📁 Drag &amp; Drop your Coros <strong>.fit</strong> or Strength <strong>.txt</strong> log here</p>
-            <p><small>or click to browse files from your device</small></p>
-            <input type="file" id="corosFileInput" accept=".fit,.txt" style="display: none;">
-        </div>
-
-        <label>Body Composition (Optional)</label>
-        <div class="grid-3">
-            <input type="number" id="weight" step="0.1" placeholder="Wt (kg)">
-            <input type="number" id="muscle" step="0.1" placeholder="Musc (kg)">
-            <input type="number" id="bf" step="0.1" placeholder="BF %">
-        </div>
-
-        <label for="logDetails">Workout Details / Notes</label>
-        <textarea id="logDetails" rows="5"
-            placeholder="Parsed workout metrics or manual notes will appear here..."></textarea>
-
-        <button type="button" id="insertPlanBtn" class="secondary-btn" style="margin-bottom: 12px; width: 100%;">📋 Insert Active Training Plan</button>
-        <button id="saveLogBtn" class="main-btn" style="margin-top: 0;">💾 Save to Vector DB</button>
-        <p id="logStatus"></p>
-    </div>
-
-    <!-- 2. Request Plan Panel -->
-    <div class="panel">
-        <h3>2 · Request Coaching Plan</h3>
+        <h3>1 · Request Weekly Coaching Plan</h3>
 
         <!-- AI Model Selection -->
         <div class="grid-2" style="margin-bottom: 14px;">
@@ -73,7 +36,7 @@
                 </select>
             </div>
             <div>
-                <label for="embeddingModelSelect" style="font-size: 0.8rem; margin-bottom: 4px; display: block;">📐 Vector Embedding Model <span style="opacity: 0.6; font-size: 0.7rem;">(3072-dim)</span></label>
+                <label for="embeddingModelSelect" style="font-size: 0.8rem; margin-bottom: 4px; display: block;">📐 Vector Embedding Model</label>
                 <select id="embeddingModelSelect" title="Select the embedding model for vector search">
                     <option value="gemini-embedding-exp-03-07" selected>gemini-embedding-exp-03-07 ✨ (Latest)</option>
                     <option value="gemini-embedding-001">gemini-embedding-001</option>
@@ -81,26 +44,18 @@
             </div>
         </div>
 
-        <label for="coachPrompt">Prompt</label>
+        <label for="coachPrompt">Prompt (Optional tweaks)</label>
         <textarea id="coachPrompt" rows="3"
-            placeholder="e.g., How should I structure my run tomorrow based on my last session?"></textarea>
+            placeholder="e.g., Focus on speed work this week, or skip leg day."></textarea>
 
-        <div class="preset-container" style="margin-top: 10px; margin-bottom: 4px;">
-            <button type="button" class="preset-btn preset-coach"
-                data-val="Plan my next progressive running session based on my history.">Next Run</button>
-            <button type="button" class="preset-btn preset-coach"
-                data-val="Plan my next strength circuit based on previous workouts.">Next Strength</button>
-            <button type="button" class="preset-btn preset-coach"
-                data-val="I need a recovery day. What should I do?">Recovery</button>
-        </div>
-
-        <button id="generatePlanBtn" class="main-btn">⚡ Generate Plan</button>
+        <button id="generatePlanBtn" class="main-btn">⚡ Generate 7-Day Plan</button>
+        <p id="planStatus"></p>
     </div>
 
-    <!-- 3. Output Panel -->
+    <!-- 2. Weekly Output Panel -->
     <div id="coachOutputPanel" class="panel hidden">
-        <h3>📋 Your Training Plan</h3>
-        <div id="coachPlanContent"></div>
+        <h3>📋 Your 7-Day Training Plan</h3>
+        <div id="weeklyPlanContainer" class="weekly-plan-grid"></div>
     </div>
 </div>
 

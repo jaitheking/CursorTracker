@@ -1043,3 +1043,7 @@ button.secondary:hover { background: var(--accent); color: #fff; }
     padding-bottom: 16px;
     margin-bottom: 20px;
 }
+.weekly-plan-grid { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+.day-card { padding: 12px; background: var(--surface-raised); border: 1px solid var(--border); border-radius: var(--radius-md); }
+.day-card h4 { margin: 0 0 6px 0; color: var(--primary); }
+.edit-day-btn { margin-top: 8px; padding: 6px 10px; font-size: 0.8rem; }

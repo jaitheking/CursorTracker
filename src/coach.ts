@@ -1,16 +1,6 @@
-import { parseFitFile } from './fitParser.js';
-
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('saveLogBtn')?.addEventListener('click', saveVectorLog);
-    document.getElementById('generatePlanBtn')?.addEventListener('click', fetchCoachPlan);
-    document.getElementById('insertPlanBtn')?.addEventListener('click', insertActivePlan);
-
-    // Initialize activity date to today
-    const dateInput = document.getElementById('activityDate') as HTMLInputElement | null;
-    if (dateInput) {
-        dateInput.valueAsDate = new Date();
-    }
-
+    document.getElementById('generatePlanBtn')?.addEventListener('click', fetchWeeklyPlan);
+    
     // Restore & persist model selections
     const chatModelSelect = document.getElementById('chatModelSelect') as HTMLSelectElement | null;
     const embeddingModelSelect = document.getElementById('embeddingModelSelect') as HTMLSelectElement | null;
@@ -30,92 +20,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Preset prompts
-    document.querySelectorAll('.preset-coach').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const promptArea = document.getElementById('coachPrompt') as HTMLTextAreaElement | null;
-            if (promptArea) {
-                promptArea.value = btn.getAttribute('data-val') || '';
-            }
-        });
-    });
+    renderLocalPlan();
 });
 
-async function saveVectorLog(): Promise<void> {
-    const typeInput = (document.getElementById('activityType') as HTMLSelectElement).value;
-    const dateInput = (document.getElementById('activityDate') as HTMLInputElement).value;
-    const detailsInput = (document.getElementById('logDetails') as HTMLTextAreaElement).value;
-    const statusText = document.getElementById('logStatus');
-    const embeddingModel = (document.getElementById('embeddingModelSelect') as HTMLSelectElement)?.value
-        || localStorage.getItem('ai_embedding_model')
-        || 'gemini-embedding-exp-03-07';
-
-    if (!detailsInput.trim() || !statusText || !dateInput) return;
-
-    statusText.innerText = `⏳ Vectorizing with ${embeddingModel} and saving to Supabase...`;
-
-    const weight = (document.getElementById('weight') as HTMLInputElement)?.value;
-    const muscle = (document.getElementById('muscle') as HTMLInputElement)?.value;
-    const bf = (document.getElementById('bf') as HTMLInputElement)?.value;
-
-    let finalDetails = detailsInput;
-    if (weight || muscle || bf) {
-        finalDetails += `\n\nBody Composition:`;
-        if (weight) finalDetails += `\nWeight: ${weight} kg`;
-        if (muscle) finalDetails += `\nMuscle Mass: ${muscle} kg`;
-        if (bf) finalDetails += `\nBody Fat: ${bf}%`;
-    }
-
-    try {
-        const response = await fetch('/api/save_log', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ activity_date: dateInput, activity_type: typeInput, details: finalDetails, embeddingModel })
-        });
-
-        const data = await response.json();
-        if (data.success) {
-            statusText.innerText = "✅ Successfully vectorized and saved!";
-            (document.getElementById('logDetails') as HTMLTextAreaElement).value = '';
-
-            // Mark this session as vectorized in local history
-            const rawHistory = localStorage.getItem('cursor_workout_history');
-            if (rawHistory) {
-                let logs = JSON.parse(rawHistory);
-                logs = logs.map((log: any) => {
-                    if (log.date === dateInput && log.type === typeInput) {
-                        log.vectorized = true;
-                    }
-                    return log;
-                });
-                localStorage.setItem('cursor_workout_history', JSON.stringify(logs));
-            }
-        } else {
-            statusText.innerText = "❌ Error: " + data.error;
-        }
-    } catch (err) {
-        statusText.innerText = "❌ Network error occurred.";
-    }
-}
-
-async function fetchCoachPlan(): Promise<void> {
+async function fetchWeeklyPlan(): Promise<void> {
     const promptInput = (document.getElementById('coachPrompt') as HTMLTextAreaElement).value;
+    const planStatus = document.getElementById('planStatus');
     const outputPanel = document.getElementById('coachOutputPanel');
-    const planContent = document.getElementById('coachPlanContent');
-    const chatModel = (document.getElementById('chatModelSelect') as HTMLSelectElement)?.value
-        || localStorage.getItem('ai_chat_model')
-        || 'gemini-3.7-flash';
-    const embeddingModel = (document.getElementById('embeddingModelSelect') as HTMLSelectElement)?.value
-        || localStorage.getItem('ai_embedding_model')
-        || 'gemini-embedding-exp-03-07';
+    const chatModel = (document.getElementById('chatModelSelect') as HTMLSelectElement)?.value || 'gemini-3.7-flash';
+    const embeddingModel = (document.getElementById('embeddingModelSelect') as HTMLSelectElement)?.value || 'gemini-embedding-exp-03-07';
 
-    if (!promptInput.trim() || !planContent || !outputPanel) return;
+    if (!planStatus || !outputPanel) return;
 
-    outputPanel.classList.remove('hidden');
-    planContent.innerText = `⏳ Retrieving vector history (${embeddingModel}) and generating plan with ${chatModel}...`;
+    planStatus.innerText = `⏳ Generating 7-day plan with ${chatModel}...`;
 
     try {
-        const response = await fetch('/api/coach', {
+        const response = await fetch('/api/generate_weekly_plan', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userPrompt: promptInput, chatModel, embeddingModel })
@@ -123,151 +43,83 @@ async function fetchCoachPlan(): Promise<void> {
 
         const data = await response.json();
         if (data.plan) {
-            planContent.innerText = data.plan;
-            localStorage.setItem('activeCoachingPlan', data.plan);
-            localStorage.setItem('activeCoachingPlanDate', new Date().toISOString());
+            planStatus.innerText = "✅ Plan generated successfully!";
+            localStorage.setItem('cursor_weekly_plan', JSON.stringify(data.plan));
+            renderLocalPlan();
         } else {
-            planContent.innerText = "❌ Error: " + data.error;
+            planStatus.innerText = "❌ Error: " + data.error;
         }
     } catch (err) {
-        planContent.innerText = "❌ Network error communicating with AI.";
+        planStatus.innerText = "❌ Network error communicating with AI.";
     }
 }
 
-function insertActivePlan(): void {
-    const plan = localStorage.getItem('activeCoachingPlan');
-    if (!plan) {
-        alert("No active training plan found. Generate one first.");
+function renderLocalPlan(): void {
+    const planStr = localStorage.getItem('cursor_weekly_plan');
+    if (!planStr) return;
+
+    const outputPanel = document.getElementById('coachOutputPanel');
+    const container = document.getElementById('weeklyPlanContainer');
+    if (!outputPanel || !container) return;
+
+    let plan = [];
+    try {
+        plan = JSON.parse(planStr);
+    } catch (e) {
+        console.error("Invalid JSON in local storage", e);
         return;
     }
-    const textArea = document.getElementById('logDetails') as HTMLTextAreaElement | null;
-    if (textArea) {
-        textArea.value = textArea.value + (textArea.value ? '\n\n' : '') + "--- ACTIVE PLAN ---\n" + plan;
-    }
+
+    outputPanel.classList.remove('hidden');
+    container.innerHTML = '';
+
+    plan.forEach((dayPlan: any, index: number) => {
+        const card = document.createElement('div');
+        card.className = 'day-card';
+        card.innerHTML = `
+            <h4>${dayPlan.day} - ${dayPlan.type}</h4>
+            <p><strong>Focus:</strong> ${dayPlan.focus}</p>
+            <p>${dayPlan.details.replace(/\n/g, '<br>')}</p>
+            <button class="secondary-btn edit-day-btn" data-index="${index}">✏️ Edit with AI</button>
+        `;
+        container.appendChild(card);
+    });
+
+    document.querySelectorAll('.edit-day-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const index = (e.target as HTMLElement).getAttribute('data-index');
+            if (index !== null) {
+                promptDayEdit(parseInt(index, 10), plan);
+            }
+        });
+    });
 }
 
-// Add file handling logic to your existing src/coach.ts
+async function promptDayEdit(index: number, fullPlan: any[]): Promise<void> {
+    const userPrompt = prompt(`What would you like to change about ${fullPlan[index].day}? (e.g., "Make it a rest day", "Add core exercises")`);
+    if (!userPrompt) return;
 
-document.addEventListener('DOMContentLoaded', () => {
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('corosFileInput') as HTMLInputElement;
+    const chatModel = (document.getElementById('chatModelSelect') as HTMLSelectElement)?.value || 'gemini-3.7-flash';
+    const planStatus = document.getElementById('planStatus');
+    if (planStatus) planStatus.innerText = `⏳ Updating ${fullPlan[index].day}...`;
 
-    // Trigger file selection window when clicking drop zone
-    dropZone?.addEventListener('click', () => fileInput?.click());
+    try {
+        const response = await fetch('/api/update_day_plan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentDayPlan: fullPlan[index], userPrompt, chatModel })
+        });
 
-    // File selection handler
-    fileInput?.addEventListener('change', (e: Event) => {
-        const target = e.target as HTMLInputElement;
-        if (target.files && target.files[0]) {
-            processCorosFile(target.files[0]);
+        const data = await response.json();
+        if (data.updatedPlan) {
+            fullPlan[index] = data.updatedPlan;
+            localStorage.setItem('cursor_weekly_plan', JSON.stringify(fullPlan));
+            renderLocalPlan();
+            if (planStatus) planStatus.innerText = `✅ ${fullPlan[index].day} updated successfully!`;
+        } else {
+            if (planStatus) planStatus.innerText = "❌ Error: " + data.error;
         }
-    });
-
-    // Drag and drop handlers
-    dropZone?.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = '#4caf50';
-    });
-
-    dropZone?.addEventListener('dragleave', () => {
-        dropZone.style.borderColor = '#ff5722';
-    });
-
-    dropZone?.addEventListener('drop', (e: DragEvent) => {
-        e.preventDefault();
-        dropZone.style.borderColor = '#ff5722';
-        if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
-            processCorosFile(e.dataTransfer.files[0]);
-        }
-    });
-});
-
-/**
- * Reads and parses exported Coros FIT and TXT files directly in the browser.
- */
-function processCorosFile(file: File): void {
-    const statusText = document.getElementById('logStatus');
-    const detailsArea = document.getElementById('logDetails') as HTMLTextAreaElement;
-
-    if (!file.name.toLowerCase().endsWith('.fit') && !file.name.toLowerCase().endsWith('.txt')) {
-        if (statusText) statusText.innerText = "❌ Please upload a valid .fit or .txt file.";
-        return;
-    }
-
-    const reader = new FileReader();
-
-    if (file.name.toLowerCase().endsWith('.txt')) {
-        reader.onload = (event: ProgressEvent<FileReader>) => {
-            const fileContent = event.target?.result as string;
-            if (detailsArea) detailsArea.value = fileContent;
-            if (statusText) statusText.innerText = "✅ Text log parsed successfully! Ready to save to Vector DB.";
-
-            const dateMatch = fileContent.match(/WORKOUT LOG:\s*([0-9\-]+)/i);
-            if (dateMatch) {
-                const dateInput = document.getElementById('activityDate') as HTMLInputElement;
-                if (dateInput) dateInput.value = dateMatch[1].trim();
-            }
-            const typeMatch = fileContent.match(/Type:\s*([a-zA-Z\/ ]+)/i);
-            if (typeMatch) {
-                const parsedType = typeMatch[1].trim();
-                const typeInput = document.getElementById('activityType') as HTMLSelectElement;
-                if (typeInput) {
-                    if (parsedType.toLowerCase().includes('run')) {
-                        typeInput.value = 'Running';
-                    } else {
-                        typeInput.value = 'Strength';
-                    }
-                }
-            }
-        };
-        reader.readAsText(file);
-    } else {
-        // FIT file parsing
-        reader.onload = (event: ProgressEvent<FileReader>) => {
-            try {
-                if (!event.target?.result) return;
-                const buffer = event.target.result as ArrayBuffer;
-                const fitData = parseFitFile(buffer);
-
-                // Build the session summary header
-                let formattedSummary = `Workout: Coros ${fitData.sport} Session
-File: ${file.name}
-Distance: ${fitData.distanceKm} km
-Total Duration: ${fitData.totalTimeMins} mins ${fitData.totalTimeSecs} secs
-Average Pace: ${fitData.paceStr}
-Average Heart Rate: ${fitData.avgHeartRate} bpm
-Max Heart Rate: ${fitData.maxHeartRate} bpm
-Calories: ${fitData.calories} kcal
-Ascent: ${fitData.ascent} m
-Descent: ${fitData.descent} m
-Average Cadence: ${fitData.avgCadence} spm`;
-
-                // Append lap splits if available
-                if (fitData.laps && fitData.laps.length > 0) {
-                    formattedSummary += `\n\nLap Splits (${fitData.laps.length} laps):`;
-                    fitData.laps.forEach(lap => {
-                        formattedSummary += `\n  Lap ${lap.lapNum}: ${lap.distanceKm} km | ${lap.timeMins}:${String(lap.timeSecs).padStart(2, '0')} | Pace: ${lap.paceStr} | HR: ${lap.avgHeartRate} bpm`;
-                    });
-                }
-
-                formattedSummary += `\nNotes: Automatically parsed from watch export (.fit).`;
-
-                if (detailsArea) detailsArea.value = formattedSummary;
-                if (statusText) statusText.innerText = "✅ .fit File parsed successfully! Ready to save to Vector DB.";
-
-                const typeInput = document.getElementById('activityType') as HTMLSelectElement;
-                if (typeInput) {
-                    if (fitData.sport.toLowerCase().includes('run')) {
-                        typeInput.value = 'Running';
-                    } else {
-                        typeInput.value = 'Strength';
-                    }
-                }
-            } catch (err) {
-                console.error("Error parsing FIT file:", err);
-                if (statusText) statusText.innerText = "❌ Failed to parse .fit file format.";
-            }
-        };
-        reader.readAsArrayBuffer(file);
+    } catch (err) {
+        if (planStatus) planStatus.innerText = "❌ Network error updating day.";
     }
 }

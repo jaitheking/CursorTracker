@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Review — Jaiprashanth</title>
+    <meta name="description" content="AI Performance Review modeled after Strava and Garmin.">
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#ff5722">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .metric-card {
+            background: var(--surface-raised);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .metric-card h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+        .metric-card p {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        .insight-list {
+            padding-left: 20px;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .insight-list li { margin-bottom: 6px; }
+    </style>
+</head>
+<body>
+
+<!-- Theme Toggle -->
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+
+<div class="container">
+    <a href="/index.html" class="nav-link">⬅️ Back to Dashboard</a>
+    <h2>📈 Performance Review</h2>
+
+    <div class="panel" style="margin-top: 16px;">
+        <div class="grid-2" style="margin-bottom: 12px;">
+            <div>
+                <label for="startDate">Start Date (Monday)</label>
+                <input type="date" id="startDate" required>
+            </div>
+            <div>
+                <label for="endDate">End Date (Sunday)</label>
+                <input type="date" id="endDate" required>
+            </div>
+        </div>
+
+        <button id="generateReviewBtn" class="main-btn">⚡ Analyze Selected Week</button>
+        <p id="reviewStatus"></p>
+    </div>
+
+    <div id="reviewOutputPanel" class="panel hidden">
+        <h3 id="reviewTitle">Weekly Breakdown</h3>
+        
+        <div class="metric-card">
+            <h4>Summary</h4>
+            <p id="reviewSummary"></p>
+        </div>
+
+        <div class="metric-card">
+            <h4>Volume Progression</h4>
+            <p id="reviewVolume"></p>
+        </div>
+
+        <div class="metric-card">
+            <h4>Running Economy</h4>
+            <p id="reviewEconomy"></p>
+        </div>
+
+        <div class="metric-card">
+            <h4>Fatigue & Readiness</h4>
+            <p id="reviewFatigue"></p>
+        </div>
+
+        <div class="metric-card">
+            <h4>Key Insights</h4>
+            <ul id="reviewInsights" class="insight-list"></ul>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="/scripts/review.js"></script>
+<script>
+    (function() {
+        const t = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
+            btn?.addEventListener('click', () => {
+                const cur = document.documentElement.getAttribute('data-theme');
+                const next = cur === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                btn.textContent = next === 'dark' ? '☀️' : '🌙';
+            });
+        });
+    })();
+</script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Workout — Jaiprashanth</title>
+    <meta name="description" content="Log your Coros Pace 4 running or strength training sessions.">
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#ff5722">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+
+<!-- Theme Toggle -->
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+
+<div class="container">
+    <a href="/index.html" class="nav-link">⬅️ Back to Dashboard</a>
+    <h2>📝 Log Workout</h2>
+
+    <div class="panel" style="margin-top: 16px;">
+        <label for="activityType">Activity Type</label>
+        <select id="activityType">
+            <option value="Running">🏃‍♂️ Running (Coros File / Data)</option>
+            <option value="Strength">🏋️‍♂️ Strength Training</option>
+            <option value="Hybrid">🏃‍♂️🏋️‍♂️ Hybrid (Run + Strength)</option>
+        </select>
+
+        <label for="activityDate">Activity Date</label>
+        <input type="date" id="activityDate" required>
+
+        <!-- File Drop Zone -->
+        <div id="dropZone" class="file-drop-zone">
+            <p>📁 Drag &amp; Drop your Coros <strong>.fit</strong> or Strength <strong>.txt</strong> log here</p>
+            <p><small>or click to browse files from your device</small></p>
+            <input type="file" id="corosFileInput" accept=".fit,.txt" style="display: none;">
+        </div>
+
+        <label>Body Composition (Optional)</label>
+        <div class="grid-3">
+            <input type="number" id="weight" step="0.1" placeholder="Wt (kg)">
+            <input type="number" id="muscle" step="0.1" placeholder="Musc (kg)">
+            <input type="number" id="bf" step="0.1" placeholder="BF %">
+        </div>
+
+        <label for="logDetails">Workout Details / Notes</label>
+        <textarea id="logDetails" rows="5"
+            placeholder="Parsed workout metrics or manual notes will appear here..."></textarea>
+            
+        <div>
+            <label for="embeddingModelSelect" style="font-size: 0.8rem; margin-bottom: 4px; display: block;">📐 Vector Embedding Model</label>
+            <select id="embeddingModelSelect" title="Select the embedding model for vector search">
+                <option value="gemini-embedding-exp-03-07" selected>gemini-embedding-exp-03-07 ✨ (Latest)</option>
+                <option value="gemini-embedding-001">gemini-embedding-001</option>
+            </select>
+        </div>
+
+        <button id="saveLogBtn" class="main-btn" style="margin-top: 12px;">💾 Save to Vector DB</button>
+        <p id="logStatus"></p>
+    </div>
+
+</div>
+
+<script type="module" src="/scripts/logWorkout.js"></script>
+<script>
+    (function() {
+        const t = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
+            btn?.addEventListener('click', () => {
+                const cur = document.documentElement.getAttribute('data-theme');
+                const next = cur === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                btn.textContent = next === 'dark' ? '☀️' : '🌙';
+            });
+        });
+    })();
+</script>
+</body>
+</html>

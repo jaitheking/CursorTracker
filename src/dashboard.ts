@@ -163,10 +163,15 @@ function initializeAICoach(): void {
     const badge        = document.getElementById('planStatusBadge');
     const overlay      = document.getElementById('fullscreenCoachOverlay');
 
-    const activePlan = localStorage.getItem('activeCoachingPlan');
-    const activeDate = localStorage.getItem('activeCoachingPlanDate');
+    const planStr = localStorage.getItem('cursor_weekly_plan');
+    let plan: any[] = [];
+    if (planStr) {
+        try {
+            plan = JSON.parse(planStr);
+        } catch (e) {}
+    }
 
-    if (activePlan) {
+    if (plan.length > 0) {
         hasContent?.classList.remove('hidden');
         emptyState?.classList.add('hidden');
 
@@ -176,12 +181,48 @@ function initializeAICoach(): void {
             badge.style.color = '#22c55e';
             badge.style.borderColor = 'rgba(34,197,94,0.3)';
         }
-        if (dateEl && activeDate) {
-            const d = new Date(activeDate);
-            dateEl.innerText = `Generated ${d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`;
+
+        const dayLabel = document.getElementById('planCurrentDay');
+        const jsDay = new Date().getDay(); 
+        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const todayName = dayNames[jsDay];
+
+        let currentIndex = plan.findIndex((d: any) => d.day === todayName);
+        if (currentIndex === -1) currentIndex = 0;
+
+        const renderDay = (index: number) => {
+            const dayData = plan[index];
+            if (!dayData) return;
+            if (dayLabel) dayLabel.innerText = dayData.day;
+            
+            const md = `### ${dayData.type}\n**Focus:** ${dayData.focus}\n\n${dayData.details}`;
+            
+            if (planContent) planContent.innerHTML = renderMarkdown(md);
+            if (fullContent) fullContent.innerHTML = renderMarkdown(md);
+        };
+
+        renderDay(currentIndex);
+
+        // Remove old listeners by cloning
+        const prevBtn = document.getElementById('prevPlanDayBtn');
+        if (prevBtn) {
+            const freshPrev = prevBtn.cloneNode(true) as HTMLElement;
+            prevBtn.parentNode?.replaceChild(freshPrev, prevBtn);
+            freshPrev.addEventListener('click', () => {
+                currentIndex = (currentIndex - 1 + plan.length) % plan.length;
+                renderDay(currentIndex);
+            });
         }
-        if (planContent) planContent.innerHTML = renderMarkdown(activePlan);
-        if (fullContent) fullContent.innerHTML = renderMarkdown(activePlan);
+
+        const nextBtn = document.getElementById('nextPlanDayBtn');
+        if (nextBtn) {
+            const freshNext = nextBtn.cloneNode(true) as HTMLElement;
+            nextBtn.parentNode?.replaceChild(freshNext, nextBtn);
+            freshNext.addEventListener('click', () => {
+                currentIndex = (currentIndex + 1) % plan.length;
+                renderDay(currentIndex);
+            });
+        }
     } else {
         hasContent?.classList.add('hidden');
         emptyState?.classList.remove('hidden');

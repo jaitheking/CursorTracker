@@ -242,6 +242,12 @@ function openInspector(log: HistoricLog): void {
     header.innerText = `🛠️ Manage Session: ${log.date}`;
 
     content.innerHTML = `
+        <label style="font-size:0.8rem; font-weight:700; margin-bottom:4px; display:block;">Workout Type</label>
+        <select id="editLogType" style="margin-bottom: 12px; width: 100%; padding: 8px; background: #333; color: #fff; border: 1px solid #444; border-radius: 4px;">
+            <option value="Running" ${log.type === 'Running' ? 'selected' : ''}>🏃‍♂️ Running</option>
+            <option value="Gym" ${log.type === 'Gym' ? 'selected' : ''}>🏋️‍♂️ Gym / Strength</option>
+            <option value="Hybrid" ${log.type === 'Hybrid' ? 'selected' : ''}>🏃‍♂️🏋️‍♂️ Hybrid</option>
+        </select>
         <label style="font-size:0.8rem; font-weight:700; margin-bottom:4px; display:block;">Workout Data Template Editor</label>
         <textarea id="editLogSummary" class="edit-textarea" rows="8">${log.summary}</textarea>
         <div class="inspector-actions">
@@ -249,10 +255,11 @@ function openInspector(log: HistoricLog): void {
             <button type="button" class="inline-delete-btn" id="inlineDeleteBtn">🗑️ Delete</button>
             ${log.vectorized ? `<button type="button" class="inline-save-btn" id="downloadLogBtn" style="background:var(--accent);border-color:var(--accent);color:#fff;">📥 Download Log</button>` : ''}
         </div>
+        <p id="inspectorStatus" style="font-size: 0.8rem; margin-top: 8px; color: #ff5722;"></p>
     `;
 
-    document.getElementById('inlineSaveBtn')?.addEventListener('click', saveModifiedLog);
-    document.getElementById('inlineDeleteBtn')?.addEventListener('click', deleteIndividualLog);
+    document.getElementById('inlineSaveBtn')?.addEventListener('click', () => saveModifiedLog(log));
+    document.getElementById('inlineDeleteBtn')?.addEventListener('click', () => deleteIndividualLog(log));
     document.getElementById('downloadLogBtn')?.addEventListener('click', () => downloadSupabaseLog(log));
 }
 
@@ -274,37 +281,88 @@ function closeInspector(): void {
     selectedLogId = null;
 }
 
-function saveModifiedLog(): void {
+async function saveModifiedLog(originalLog: HistoricLog): Promise<void> {
     if (!selectedLogId) return;
     const textArea = document.getElementById('editLogSummary') as HTMLTextAreaElement | null;
-    if (!textArea) return;
+    const typeSelect = document.getElementById('editLogType') as HTMLSelectElement | null;
+    const statusText = document.getElementById('inspectorStatus');
+    if (!textArea || !typeSelect || !statusText) return;
 
-    const rawHistory = localStorage.getItem('cursor_workout_history');
-    let logs: HistoricLog[] = rawHistory ? JSON.parse(rawHistory) : [];
+    statusText.innerText = "⏳ Updating log in database...";
+    const newType = typeSelect.value;
+    const newSummary = textArea.value;
 
-    logs = logs.map(log => {
-        if (log.id === selectedLogId) {
-            log.summary = textArea.value;
+    try {
+        if (originalLog.vectorized) {
+            const response = await fetch('/api/update_log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    old_activity_date: originalLog.date,
+                    old_activity_type: originalLog.type,
+                    new_activity_type: newType,
+                    details: newSummary
+                })
+            });
+            const data = await response.json();
+            if (!data.success) {
+                statusText.innerText = "❌ Error: " + data.error;
+                return;
+            }
         }
-        return log;
-    });
 
-    localStorage.setItem('cursor_workout_history', JSON.stringify(logs));
-    renderCalendarView();
-    closeInspector();
+        const rawHistory = localStorage.getItem('cursor_workout_history');
+        let logs: HistoricLog[] = rawHistory ? JSON.parse(rawHistory) : [];
+
+        logs = logs.map(log => {
+            if (log.id === selectedLogId) {
+                log.summary = newSummary;
+                log.type = newType;
+            }
+            return log;
+        });
+
+        localStorage.setItem('cursor_workout_history', JSON.stringify(logs));
+        renderCalendarView();
+        closeInspector();
+    } catch (err) {
+        statusText.innerText = "❌ Network error updating log.";
+    }
 }
 
-function deleteIndividualLog(): void {
+async function deleteIndividualLog(log: HistoricLog): Promise<void> {
     if (!selectedLogId || !confirm('Confirm deleting this single workout log entry?')) return;
+    const statusText = document.getElementById('inspectorStatus');
+    if (statusText) statusText.innerText = "⏳ Deleting log from database...";
 
-    const rawHistory = localStorage.getItem('cursor_workout_history');
-    let logs: HistoricLog[] = rawHistory ? JSON.parse(rawHistory) : [];
+    try {
+        if (log.vectorized) {
+            const response = await fetch('/api/delete_log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    activity_date: log.date,
+                    activity_type: log.type
+                })
+            });
+            const data = await response.json();
+            if (!data.success) {
+                if (statusText) statusText.innerText = "❌ Error: " + data.error;
+                return;
+            }
+        }
 
-    logs = logs.filter(log => log.id !== selectedLogId);
+        const rawHistory = localStorage.getItem('cursor_workout_history');
+        let logs: HistoricLog[] = rawHistory ? JSON.parse(rawHistory) : [];
 
-    localStorage.setItem('cursor_workout_history', JSON.stringify(logs));
-    renderCalendarView();
-    closeInspector();
+        logs = logs.filter(l => l.id !== selectedLogId);
+
+        localStorage.setItem('cursor_workout_history', JSON.stringify(logs));
+        renderCalendarView();
+        closeInspector();
+    } catch (err) {
+        if (statusText) statusText.innerText = "❌ Network error deleting log.";
+    }
 }
 
 function bindHistoryActions(): void {

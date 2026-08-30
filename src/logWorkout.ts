@@ -18,7 +18,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     setupFileDropZone();
+    setupTrainingPlanDropdown();
 });
+
+function setupTrainingPlanDropdown() {
+    const planStr = localStorage.getItem('cursor_weekly_plan');
+    const select = document.getElementById('planDaySelect') as HTMLSelectElement | null;
+    const btn = document.getElementById('insertPlanBtn') as HTMLButtonElement | null;
+    const details = document.getElementById('logDetails') as HTMLTextAreaElement | null;
+
+    if (!select || !btn || !details) return;
+
+    if (planStr) {
+        let plan: any[] = [];
+        try { plan = JSON.parse(planStr); } catch (e) {}
+        
+        plan.forEach((dayData) => {
+            const opt = document.createElement('option');
+            opt.value = dayData.day;
+            opt.text = `${dayData.day} - ${dayData.type}`;
+            // Store the full details as data attribute for easy access
+            opt.dataset.plan = `Focus: ${dayData.focus}\n${dayData.details}`;
+            select.appendChild(opt);
+        });
+
+        const jsDay = new Date().getDay(); 
+        const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const todayName = dayNames[jsDay];
+        
+        // Auto-select today if it exists
+        for (let i = 0; i < select.options.length; i++) {
+            if (select.options[i].value === todayName) {
+                select.selectedIndex = i;
+                break;
+            }
+        }
+    } else {
+        select.disabled = true;
+        btn.disabled = true;
+        const opt = document.createElement('option');
+        opt.text = "No active training plan found";
+        select.appendChild(opt);
+    }
+
+    btn.addEventListener('click', () => {
+        const selectedOpt = select.options[select.selectedIndex];
+        if (selectedOpt && selectedOpt.dataset.plan) {
+            const currentVal = details.value.trim();
+            const insertion = `--- Training Plan ---\n${selectedOpt.dataset.plan}\n---------------------`;
+            details.value = currentVal ? `${currentVal}\n\n${insertion}` : insertion;
+        }
+    });
+}
 
 function setupFileDropZone() {
     const dropZone = document.getElementById('dropZone');

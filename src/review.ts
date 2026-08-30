@@ -1,3 +1,7 @@
+declare var Chart: any;
+let runChartInstance: any = null;
+let gymChartInstance: any = null;
+
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('generateReviewBtn')?.addEventListener('click', generateReview);
     
@@ -17,6 +21,24 @@ document.addEventListener('DOMContentLoaded', () => {
         startDateInput.value = monday.toISOString().split('T')[0];
         endDateInput.value = sunday.toISOString().split('T')[0];
     }
+
+    document.getElementById('preset2Weeks')?.addEventListener('click', () => {
+        if (!startDateInput || !endDateInput) return;
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - 14);
+        startDateInput.value = start.toISOString().split('T')[0];
+        endDateInput.value = end.toISOString().split('T')[0];
+    });
+
+    document.getElementById('preset1Month')?.addEventListener('click', () => {
+        if (!startDateInput || !endDateInput) return;
+        const end = new Date();
+        const start = new Date();
+        start.setMonth(end.getMonth() - 1);
+        startDateInput.value = start.toISOString().split('T')[0];
+        endDateInput.value = end.toISOString().split('T')[0];
+    });
 
     renderLocalReview();
 });
@@ -64,7 +86,7 @@ function renderLocalReview(): void {
     const outputPanel = document.getElementById('reviewOutputPanel');
     if (!outputPanel) return;
 
-    let review = null;
+    let review: any = null;
     try {
         review = JSON.parse(reviewStr);
     } catch (e) {
@@ -81,15 +103,12 @@ function renderLocalReview(): void {
 
     const titleEl = document.getElementById('reviewTitle');
     if (titleEl && review.dateRange) {
-        titleEl.innerText = `Weekly Breakdown (${review.dateRange})`;
+        titleEl.innerText = `Performance Breakdown (${review.dateRange})`;
     } else if (titleEl) {
-        titleEl.innerText = `Weekly Breakdown`;
+        titleEl.innerText = `Performance Breakdown`;
     }
 
     setText('reviewSummary', review.summary || 'No summary available.');
-    setText('reviewVolume', review.volumeProgression || 'No data.');
-    setText('reviewEconomy', review.runningEconomy || 'No data.');
-    setText('reviewFatigue', review.fatigueReadiness || 'No data.');
 
     const insightsEl = document.getElementById('reviewInsights');
     if (insightsEl) {
@@ -99,6 +118,55 @@ function renderLocalReview(): void {
                 const li = document.createElement('li');
                 li.innerText = insight;
                 insightsEl.appendChild(li);
+            });
+        }
+    }
+
+    // Chart.js rendering
+    if (review.chartData && Array.isArray(review.chartData.labels)) {
+        const labels = review.chartData.labels;
+        const runData = review.chartData.runDistance || [];
+        const gymData = review.chartData.gymTime || [];
+
+        const runCtx = document.getElementById('runChart') as HTMLCanvasElement;
+        const gymCtx = document.getElementById('gymChart') as HTMLCanvasElement;
+
+        if (runChartInstance) runChartInstance.destroy();
+        if (gymChartInstance) gymChartInstance.destroy();
+
+        if (runCtx && typeof Chart !== 'undefined') {
+            runChartInstance = new Chart(runCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Distance (km)',
+                        data: runData,
+                        backgroundColor: '#ff5722'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        if (gymCtx && typeof Chart !== 'undefined') {
+            gymChartInstance = new Chart(gymCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Gym Time (mins)',
+                        data: gymData,
+                        backgroundColor: '#4caf50'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: { y: { beginAtZero: true } }
+                }
             });
         }
     }

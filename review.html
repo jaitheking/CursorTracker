@@ -58,12 +58,16 @@
             </div>
         </div>
 
-        <button id="generateReviewBtn" class="main-btn">⚡ Analyze Selected Week</button>
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <button id="preset2Weeks" class="secondary-btn" style="flex: 1;">Last 2 Weeks</button>
+            <button id="preset1Month" class="secondary-btn" style="flex: 1;">Last 1 Month</button>
+        </div>
+        <button id="generateReviewBtn" class="main-btn">⚡ Analyze Selected Period</button>
         <p id="reviewStatus"></p>
     </div>
 
     <div id="reviewOutputPanel" class="panel hidden">
-        <h3 id="reviewTitle">Weekly Breakdown</h3>
+        <h3 id="reviewTitle">Performance Breakdown</h3>
         
         <div class="metric-card">
             <h4>Summary</h4>
@@ -71,27 +75,23 @@
         </div>
 
         <div class="metric-card">
-            <h4>Volume Progression</h4>
-            <p id="reviewVolume"></p>
-        </div>
-
-        <div class="metric-card">
-            <h4>Running Economy</h4>
-            <p id="reviewEconomy"></p>
-        </div>
-
-        <div class="metric-card">
-            <h4>Fatigue & Readiness</h4>
-            <p id="reviewFatigue"></p>
-        </div>
-
-        <div class="metric-card">
             <h4>Key Insights</h4>
             <ul id="reviewInsights" class="insight-list"></ul>
+        </div>
+
+        <div class="metric-card">
+            <h4>Daily Running Distance (km)</h4>
+            <canvas id="runChart" height="150"></canvas>
+        </div>
+
+        <div class="metric-card">
+            <h4>Daily Gym Time (mins)</h4>
+            <canvas id="gymChart" height="150"></canvas>
         </div>
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="module" src="/scripts/review.js"></script>
 <script>
     (function() {

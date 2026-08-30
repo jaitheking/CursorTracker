@@ -43,14 +43,16 @@ export default async function handler(req: any, res: any) {
             : `for the recent training period`;
 
         const systemInstruction = `
-You are an expert AI Performance Analyst generating a weekly review for an athlete ${dateContext}.
+You are an expert AI Performance Analyst generating a review for an athlete ${dateContext}.
 Analyze the provided training logs and generate a structured JSON review modeled after Strava/Garmin analytics.
-Return a valid JSON object with the following keys:
-- "summary": A brief 2-3 sentence overview of the week's training.
-- "volumeProgression": string describing volume trends and consistency.
-- "runningEconomy": string analyzing pace/HR relationship.
-- "fatigueReadiness": string assessing recovery state based on rest/intensity.
-- "keyInsights": Array of strings (3 actionable insights for the next block).
+Keep it concise and NOT wordy.
+Return a valid JSON object with the exact following keys:
+- "summary": A brief 2-sentence overview.
+- "keyInsights": Array of strings (3 concise, actionable insights).
+- "chartData": An object containing chart data for visualization. It MUST have:
+    - "labels": Array of strings (e.g. dates or days, sorted chronologically).
+    - "runDistance": Array of numbers (daily running distance in km matching the labels).
+    - "gymTime": Array of numbers (daily gym/strength time in minutes matching the labels, assume 45 mins per gym session if not specified).
 DO NOT WRAP IN \`\`\`json\`\`\`, JUST OUTPUT THE RAW JSON OBJECT.
 `;
 

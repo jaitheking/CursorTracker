@@ -46,6 +46,16 @@
             <input type="number" id="bf" step="0.1" placeholder="BF %">
         </div>
 
+        <div style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 8px; margin-top: 12px;">
+            <div style="flex-grow: 1;">
+                <label for="planDaySelect" style="margin-bottom: 4px; display: block;">Insert Training Plan (Optional)</label>
+                <select id="planDaySelect">
+                    <option value="">-- Select a day --</option>
+                </select>
+            </div>
+            <button type="button" id="insertPlanBtn" class="secondary-btn" style="height: 38px; padding: 0 12px; margin-bottom: 12px;">📥 Insert</button>
+        </div>
+
         <label for="logDetails">Workout Details / Notes</label>
         <textarea id="logDetails" rows="5"
             placeholder="Parsed workout metrics or manual notes will appear here..."></textarea>

@@ -79,14 +79,31 @@
             <ul id="reviewInsights" class="insight-list"></ul>
         </div>
 
-        <div class="metric-card">
-            <h4>Daily Running Distance (km)</h4>
-            <canvas id="runChart" height="150"></canvas>
-        </div>
+        <div class="grid-2">
+            <!-- Running View -->
+            <div class="metric-card" id="runningView">
+                <h4>🏃‍♂️ Running Performance</h4>
+                <div style="display: flex; gap: 10px; margin-bottom: 12px; font-size: 0.9rem; flex-wrap: wrap;">
+                    <div style="background: #333; padding: 8px; border-radius: 4px;">Dist: <span id="runTotalDist" style="font-weight: bold;">--</span></div>
+                    <div style="background: #333; padding: 8px; border-radius: 4px;">Pace: <span id="runAvgPace" style="font-weight: bold;">--</span></div>
+                    <div style="background: #333; padding: 8px; border-radius: 4px;">HR: <span id="runAvgHR" style="font-weight: bold;">--</span></div>
+                </div>
+                <div style="margin-top: 10px;">
+                    <canvas id="runChart" height="200"></canvas>
+                </div>
+            </div>
 
-        <div class="metric-card">
-            <h4>Daily Gym Time (mins)</h4>
-            <canvas id="gymChart" height="150"></canvas>
+            <!-- Strength View -->
+            <div class="metric-card" id="strengthView">
+                <h4>🏋️‍♂️ Strength Performance</h4>
+                <div style="display: flex; gap: 10px; margin-bottom: 12px; font-size: 0.9rem; flex-wrap: wrap;">
+                    <div style="background: #333; padding: 8px; border-radius: 4px;">Time: <span id="strengthTotalTime" style="font-weight: bold;">--</span></div>
+                    <div style="background: #333; padding: 8px; border-radius: 4px;">HR: <span id="strengthAvgHR" style="font-weight: bold;">--</span></div>
+                </div>
+                <div style="margin-top: 10px;">
+                    <canvas id="gymChart" height="200"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 </div>

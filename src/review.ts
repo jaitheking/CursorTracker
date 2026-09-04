@@ -122,12 +122,21 @@ function renderLocalReview(): void {
         }
     }
 
+    // Render stats
+    if (review.runningStats) {
+        setText('runTotalDist', review.runningStats.totalDistance || '--');
+        setText('runAvgPace', review.runningStats.avgPace || '--');
+        setText('runAvgHR', review.runningStats.avgHR || '--');
+    }
+    if (review.strengthStats) {
+        setText('strengthTotalTime', review.strengthStats.totalTime || '--');
+        setText('strengthAvgHR', review.strengthStats.avgHR || '--');
+    }
+
     // Chart.js rendering
     if (review.chartData && Array.isArray(review.chartData.labels)) {
         const labels = review.chartData.labels;
-        const runData = review.chartData.runDistance || [];
-        const gymData = review.chartData.gymTime || [];
-
+        
         const runCtx = document.getElementById('runChart') as HTMLCanvasElement;
         const gymCtx = document.getElementById('gymChart') as HTMLCanvasElement;
 
@@ -136,36 +145,64 @@ function renderLocalReview(): void {
 
         if (runCtx && typeof Chart !== 'undefined') {
             runChartInstance = new Chart(runCtx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Distance (km)',
-                        data: runData,
-                        backgroundColor: '#ff5722'
-                    }]
+                    datasets: [
+                        {
+                            label: 'Pace (mins/km)',
+                            data: review.chartData.runningPace || [],
+                            borderColor: '#3b82f6',
+                            backgroundColor: '#3b82f6',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Heart Rate (bpm)',
+                            data: review.chartData.runningHR || [],
+                            borderColor: '#ef4444',
+                            backgroundColor: '#ef4444',
+                            yAxisID: 'y1'
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
-                    scales: { y: { beginAtZero: true } }
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left' },
+                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } }
+                    }
                 }
             });
         }
 
         if (gymCtx && typeof Chart !== 'undefined') {
             gymChartInstance = new Chart(gymCtx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Gym Time (mins)',
-                        data: gymData,
-                        backgroundColor: '#4caf50'
-                    }]
+                    datasets: [
+                        {
+                            label: 'Duration (mins)',
+                            data: review.chartData.strengthDuration || [],
+                            borderColor: '#10b981',
+                            backgroundColor: '#10b981',
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Heart Rate (bpm)',
+                            data: review.chartData.strengthHR || [],
+                            borderColor: '#ef4444',
+                            backgroundColor: '#ef4444',
+                            yAxisID: 'y1'
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
-                    scales: { y: { beginAtZero: true } }
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left' },
+                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } }
+                    }
                 }
             });
         }

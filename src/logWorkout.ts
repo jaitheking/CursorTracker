@@ -92,27 +92,57 @@ function setupFileDropZone() {
         e.preventDefault();
         dropZone.style.borderColor = '#444';
         if (e.dataTransfer && e.dataTransfer.files.length > 0) {
-            handleFile(e.dataTransfer.files[0]);
+            handleFiles(Array.from(e.dataTransfer.files));
         }
     });
 
     fileInput.addEventListener('change', (e) => {
         const target = e.target as HTMLInputElement;
         if (target.files && target.files.length > 0) {
-            handleFile(target.files[0]);
+            handleFiles(Array.from(target.files));
         }
     });
 }
 
-async function handleFile(file: File) {
-    if (file.name.endsWith('.fit')) {
-        const buffer = await file.arrayBuffer();
-        const parsed = await parseFitFile(buffer);
-        (document.getElementById('logDetails') as HTMLTextAreaElement).value = JSON.stringify(parsed, null, 2);
-    } else if (file.name.endsWith('.txt')) {
-        const text = await file.text();
-        (document.getElementById('logDetails') as HTMLTextAreaElement).value = text;
+async function handleFiles(files: File[]) {
+    const detailsArea = document.getElementById('logDetails') as HTMLTextAreaElement;
+    const statusText = document.getElementById('logStatus');
+    if (!detailsArea) return;
+    
+    let combinedContent = detailsArea.value ? detailsArea.value + '\n\n' : '';
+
+    for (const file of files) {
+        if (file.name.endsWith('.fit')) {
+            if (statusText) statusText.innerText = `⏳ Parsing and summarizing ${file.name} using AI...`;
+            try {
+                const buffer = await file.arrayBuffer();
+                const parsed = await parseFitFile(buffer);
+                
+                // Call API to summarize
+                const chatModel = localStorage.getItem('ai_chat_model') || 'gemini-3.7-flash';
+                const response = await fetch('/api/summarize_fit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fitData: parsed, chatModel })
+                });
+                
+                const data = await response.json();
+                if (data.summary) {
+                    combinedContent += `--- Summary for ${file.name} ---\n${data.summary}\n`;
+                } else {
+                    combinedContent += `--- Raw Data for ${file.name} (Summary Failed) ---\n${JSON.stringify(parsed, null, 2)}\n`;
+                }
+            } catch (e) {
+                combinedContent += `--- Raw Data for ${file.name} (Summary Error) ---\nError parsing file.\n`;
+            }
+        } else if (file.name.endsWith('.txt')) {
+            const text = await file.text();
+            combinedContent += `--- Notes from ${file.name} ---\n${text}\n`;
+        }
     }
+    
+    detailsArea.value = combinedContent;
+    if (statusText) statusText.innerText = "✅ Files imported successfully!";
 }
 
 async function saveVectorLog(): Promise<void> {

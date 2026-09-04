@@ -250,6 +250,13 @@ function openInspector(log: HistoricLog): void {
         </select>
         <label style="font-size:0.8rem; font-weight:700; margin-bottom:4px; display:block;">Workout Data Template Editor</label>
         <textarea id="editLogSummary" class="edit-textarea" rows="8">${log.summary}</textarea>
+        <div>
+            <label for="editEmbeddingModelSelect" style="font-size: 0.8rem; font-weight:700; margin-bottom: 4px; display: block;">📐 Vector Embedding Model</label>
+            <select id="editEmbeddingModelSelect" style="margin-bottom: 12px; width: 100%; padding: 8px; background: #333; color: #fff; border: 1px solid #444; border-radius: 4px;">
+                <option value="gemini-embedding-exp-03-07">gemini-embedding-exp-03-07 ✨ (Latest)</option>
+                <option value="gemini-embedding-001">gemini-embedding-001</option>
+            </select>
+        </div>
         <div class="inspector-actions">
             <button type="button" class="inline-save-btn" id="inlineSaveBtn">💾 Update Log</button>
             <button type="button" class="inline-delete-btn" id="inlineDeleteBtn">🗑️ Delete</button>
@@ -261,6 +268,15 @@ function openInspector(log: HistoricLog): void {
     document.getElementById('inlineSaveBtn')?.addEventListener('click', () => saveModifiedLog(log));
     document.getElementById('inlineDeleteBtn')?.addEventListener('click', () => deleteIndividualLog(log));
     document.getElementById('downloadLogBtn')?.addEventListener('click', () => downloadSupabaseLog(log));
+
+    const editEmbeddingModelSelect = document.getElementById('editEmbeddingModelSelect') as HTMLSelectElement | null;
+    if (editEmbeddingModelSelect) {
+        const saved = localStorage.getItem('ai_embedding_model');
+        if (saved) editEmbeddingModelSelect.value = saved;
+        editEmbeddingModelSelect.addEventListener('change', () => {
+            localStorage.setItem('ai_embedding_model', editEmbeddingModelSelect.value);
+        });
+    }
 }
 
 function downloadSupabaseLog(log: HistoricLog): void {
@@ -294,6 +310,9 @@ async function saveModifiedLog(originalLog: HistoricLog): Promise<void> {
 
     try {
         if (originalLog.vectorized) {
+            const editEmbeddingModelSelect = document.getElementById('editEmbeddingModelSelect') as HTMLSelectElement | null;
+            const embeddingModel = editEmbeddingModelSelect?.value || 'gemini-embedding-exp-03-07';
+
             const response = await fetch('/api/update_log', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -301,7 +320,8 @@ async function saveModifiedLog(originalLog: HistoricLog): Promise<void> {
                     old_activity_date: originalLog.date,
                     old_activity_type: originalLog.type,
                     new_activity_type: newType,
-                    details: newSummary
+                    details: newSummary,
+                    embeddingModel
                 })
             });
             const data = await response.json();

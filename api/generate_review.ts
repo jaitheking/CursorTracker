@@ -49,10 +49,9 @@ Keep it concise and NOT wordy.
 Return a valid JSON object with the exact following keys:
 - "summary": A brief 2-sentence overview.
 - "keyInsights": Array of strings (3 concise, actionable insights).
-- "chartData": An object containing chart data for visualization. It MUST have:
-    - "labels": Array of strings (e.g. dates or days, sorted chronologically).
-    - "runDistance": Array of numbers (daily running distance in km matching the labels).
-    - "gymTime": Array of numbers (daily gym/strength time in minutes matching the labels, assume 45 mins per gym session if not specified).
+- "runningStats": An object with "totalDistance" (string), "avgPace" (string), "avgHR" (string).
+- "strengthStats": An object with "totalTime" (string), "avgHR" (string).
+- "chartData": An object with "labels" (array of dates), "runningPace" (array of numbers, pace in mins), "runningHR" (array of numbers), "strengthDuration" (array of numbers), "strengthHR" (array of numbers).
 DO NOT WRAP IN \`\`\`json\`\`\`, JUST OUTPUT THE RAW JSON OBJECT.
 `;
 

@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function generateReview(): Promise<void> {
     const statusText = document.getElementById('reviewStatus');
     const outputPanel = document.getElementById('reviewOutputPanel');
-    const chatModel = localStorage.getItem('ai_chat_model') || 'gemini-3.7-flash';
+    const chatModel = localStorage.getItem('ai_chat_model') || 'gemini-3.8-flash';
     
     const startDate = (document.getElementById('startDate') as HTMLInputElement)?.value;
     const endDate = (document.getElementById('endDate') as HTMLInputElement)?.value;

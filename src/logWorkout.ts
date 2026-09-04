@@ -119,7 +119,7 @@ async function handleFiles(files: File[]) {
                 const parsed = await parseFitFile(buffer);
                 
                 // Call API to summarize
-                const chatModel = localStorage.getItem('ai_chat_model') || 'gemini-3.7-flash';
+                const chatModel = localStorage.getItem('ai_chat_model') || 'gemini-3.8-flash';
                 const response = await fetch('/api/summarize_fit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

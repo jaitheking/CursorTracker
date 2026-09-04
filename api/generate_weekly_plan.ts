@@ -12,7 +12,7 @@ export default async function handler(req: any, res: any) {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
     const { userPrompt, chatModel, embeddingModel } = req.body;
-    const resolvedChatModel: string = chatModel || 'gemini-3.7-flash';
+    const resolvedChatModel: string = chatModel || 'gemini-3.8-flash';
     const resolvedEmbeddingModel: string = embeddingModel || 'gemini-embedding-exp-03-07';
 
     try {

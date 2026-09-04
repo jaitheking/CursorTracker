@@ -27,7 +27,7 @@ async function fetchWeeklyPlan(): Promise<void> {
     const promptInput = (document.getElementById('coachPrompt') as HTMLTextAreaElement).value;
     const planStatus = document.getElementById('planStatus');
     const outputPanel = document.getElementById('coachOutputPanel');
-    const chatModel = (document.getElementById('chatModelSelect') as HTMLSelectElement)?.value || 'gemini-3.7-flash';
+    const chatModel = (document.getElementById('chatModelSelect') as HTMLSelectElement)?.value || 'gemini-3.8-flash';
     const embeddingModel = (document.getElementById('embeddingModelSelect') as HTMLSelectElement)?.value || 'gemini-embedding-exp-03-07';
 
     if (!planStatus || !outputPanel) return;
@@ -99,7 +99,7 @@ async function promptDayEdit(index: number, fullPlan: any[]): Promise<void> {
     const userPrompt = prompt(`What would you like to change about ${fullPlan[index].day}? (e.g., "Make it a rest day", "Add core exercises")`);
     if (!userPrompt) return;
 
-    const chatModel = (document.getElementById('chatModelSelect') as HTMLSelectElement)?.value || 'gemini-3.7-flash';
+    const chatModel = (document.getElementById('chatModelSelect') as HTMLSelectElement)?.value || 'gemini-8-flash';
     const planStatus = document.getElementById('planStatus');
     if (planStatus) planStatus.innerText = `⏳ Updating ${fullPlan[index].day}...`;
 

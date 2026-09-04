@@ -9,7 +9,7 @@ export default async function handler(req: any, res: any) {
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     const { fitData, chatModel } = req.body;
-    const resolvedChatModel: string = chatModel || 'gemini-3.7-flash';
+    const resolvedChatModel: string = chatModel || 'gemini-3.8-flash';
 
     try {
         const systemInstruction = `

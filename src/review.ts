@@ -133,6 +133,64 @@ function renderLocalReview(): void {
         setText('strengthAvgHR', review.strengthStats.avgHR || '--');
     }
 
+    const createGradient = (context: any, r: number, g: number, b: number) => {
+        const chart = context.chart;
+        const {ctx, chartArea} = chart;
+        if (!chartArea) return null;
+
+        const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+        gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.35)`);   
+        gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, 0.1)`); 
+        gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.0)`);   
+        return gradient;
+    };
+
+    const commonDatasetOptions = {
+        borderWidth: 3,
+        tension: 0.4, 
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointHoverBorderColor: '#ffffff',
+        pointHoverBorderWidth: 2,
+        fill: true
+    };
+
+    const commonOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 1200, easing: 'easeOutQuart' },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: '#1f2937',
+                titleFont: { family: 'Inter', size: 13, weight: '600' },
+                bodyFont: { family: 'Inter', size: 13 },
+                padding: 12,
+                cornerRadius: 8,
+                displayColors: false,
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+                borderWidth: 1
+            }
+        },
+        scales: {
+            x: {
+                grid: { display: false },
+                ticks: { color: '#9ca3af', font: { family: 'Inter', size: 12 } }
+            },
+            y: {
+                type: 'linear', display: true, position: 'left',
+                grid: { color: 'rgba(156, 163, 175, 0.07)', drawBorder: false },
+                ticks: { color: '#9ca3af', font: { family: 'Inter', size: 12 }, padding: 8 }
+            },
+            y1: {
+                type: 'linear', display: true, position: 'right',
+                grid: { drawOnChartArea: false },
+                ticks: { color: '#9ca3af', font: { family: 'Inter', size: 12 }, padding: 8 }
+            }
+        },
+        interaction: { mode: 'index', intersect: false }
+    };
+
     // Chart.js rendering
     if (review.chartData && Array.isArray(review.chartData.labels)) {
         const labels = review.chartData.labels;
@@ -150,28 +208,26 @@ function renderLocalReview(): void {
                     labels: labels,
                     datasets: [
                         {
+                            ...commonDatasetOptions,
                             label: 'Pace (mins/km)',
                             data: review.chartData.runningPace || [],
-                            borderColor: '#3b82f6',
-                            backgroundColor: '#3b82f6',
+                            borderColor: '#00f2fe',
+                            pointHoverBackgroundColor: '#00f2fe',
+                            backgroundColor: (ctx: any) => createGradient(ctx, 0, 242, 254),
                             yAxisID: 'y'
                         },
                         {
+                            ...commonDatasetOptions,
                             label: 'Heart Rate (bpm)',
                             data: review.chartData.runningHR || [],
                             borderColor: '#ef4444',
-                            backgroundColor: '#ef4444',
+                            pointHoverBackgroundColor: '#ef4444',
+                            backgroundColor: (ctx: any) => createGradient(ctx, 239, 68, 68),
                             yAxisID: 'y1'
                         }
                     ]
                 },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: { type: 'linear', display: true, position: 'left' },
-                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } }
-                    }
-                }
+                options: commonOptions as any
             });
         }
 
@@ -182,28 +238,26 @@ function renderLocalReview(): void {
                     labels: labels,
                     datasets: [
                         {
+                            ...commonDatasetOptions,
                             label: 'Duration (mins)',
                             data: review.chartData.strengthDuration || [],
                             borderColor: '#10b981',
-                            backgroundColor: '#10b981',
+                            pointHoverBackgroundColor: '#10b981',
+                            backgroundColor: (ctx: any) => createGradient(ctx, 16, 185, 129),
                             yAxisID: 'y'
                         },
                         {
+                            ...commonDatasetOptions,
                             label: 'Heart Rate (bpm)',
                             data: review.chartData.strengthHR || [],
                             borderColor: '#ef4444',
-                            backgroundColor: '#ef4444',
+                            pointHoverBackgroundColor: '#ef4444',
+                            backgroundColor: (ctx: any) => createGradient(ctx, 239, 68, 68),
                             yAxisID: 'y1'
                         }
                     ]
                 },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: { type: 'linear', display: true, position: 'left' },
-                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } }
-                    }
-                }
+                options: commonOptions as any
             });
         }
     }

@@ -118,12 +118,12 @@ async function handleFiles(files: File[]) {
                 const buffer = await file.arrayBuffer();
                 const parsed = await parseFitFile(buffer);
                 
-                // Call API to summarize
                 const chatModel = localStorage.getItem('ai_chat_model') || 'gemini-3.8-flash';
+                const typeInput = (document.getElementById('activityType') as HTMLSelectElement)?.value || 'Unknown';
                 const response = await fetch('/api/summarize_fit', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fitData: parsed, chatModel })
+                    body: JSON.stringify({ fitData: parsed, chatModel, activityType: typeInput })
                 });
                 
                 const data = await response.json();

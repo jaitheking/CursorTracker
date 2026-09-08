@@ -25,7 +25,7 @@ Each object must have the following keys:
 - "day": string (e.g., "Monday")
 - "type": string (e.g., "Running", "Strength", "Hybrid", "Rest")
 - "focus": string (e.g., "Speed Work", "Upper Body", "Recovery")
-- "details": string (The main workout description/circuit details)
+- "details": string (The main workout description/circuit details. Use markdown bullet points, clear spacing, and line breaks (\\n) to make it highly readable and well-formatted.)
 DO NOT WRAP IN \`\`\`json\`\`\`, JUST OUTPUT THE RAW JSON ARRAY.
 `;
 

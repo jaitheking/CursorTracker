@@ -458,6 +458,9 @@ button.secondary:hover { background: var(--accent); color: #fff; }
     border-radius: var(--radius-lg);
     padding: 12px;
     margin-bottom: 20px;
+    overflow-x: auto;
+    box-sizing: border-box;
+    width: 100%;
 }
 .weekdays-grid, .days-grid {
     display: grid;

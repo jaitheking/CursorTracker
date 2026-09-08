@@ -8,16 +8,17 @@ export default async function handler(req: any, res: any) {
     }
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const { fitData, chatModel } = req.body;
+    const { fitData, chatModel, activityType } = req.body;
     const resolvedChatModel: string = chatModel || 'gemini-3.8-flash';
 
     try {
         const systemInstruction = `
 You are an expert sports data analyst. Your job is to read raw parsed FIT file JSON data and produce a highly structured, accurate, and clean markdown summary of the workout. 
+The user has indicated this activity is a: ${activityType || 'Unknown'}.
 Do NOT misinterpret lap data. Specifically:
 - Overall distance and duration are the TOTALS.
 - Do NOT mistake the first lap's distance/time as the overall total.
-- If it is a strength workout (no distance, only time and HR), identify it as such.
+- If it is a strength workout (e.g. indicated by the user, or no distance, only time and HR), identify it as such and focus on duration, heart rate, and sets.
 - If it is a running workout, summarize total distance, total time, average pace, max/avg HR, cadence, and a clean breakdown of the laps (splits).
 Extract all important metrics accurately. Provide the summary as clean markdown text.
 `;

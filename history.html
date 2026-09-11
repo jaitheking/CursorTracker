@@ -4,44 +4,108 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Workout History — Jaiprashanth</title>
-    <meta name="description" content="Calendar view of all workout history. Import, inspect, and manage past sessions.">
+    <meta name="description" content="Calendar view of all workout history. Inspect and manage past sessions.">
 
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#ff5722">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .view-toggle { display: flex; gap: 8px; margin: 16px 0; }
+        .view-toggle-btn {
+            flex: 1; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+            background: var(--surface-raised); color: var(--text-secondary); cursor: pointer;
+            font-size: 0.875rem; font-weight: 600; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .view-toggle-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+        .weekly-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+        @media (max-width: 600px) { .weekly-grid { grid-template-columns: 1fr; } }
+
+        .weekly-day-card {
+            background: var(--surface-raised); border: 1px solid var(--border);
+            border-radius: var(--radius-md); padding: 12px; min-height: 90px;
+        }
+        .weekly-day-card.today-card { border-color: var(--primary); }
+        .weekly-day-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .weekly-day-name { font-weight: 700; font-size: 0.9rem; color: var(--text-primary); }
+        .weekly-day-date { font-size: 0.75rem; color: var(--text-muted); }
+        .weekly-plan-box {
+            background: var(--surface-sunken); border-radius: 6px; padding: 6px 8px;
+            font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 6px;
+            border-left: 3px solid var(--accent);
+        }
+        .weekly-plan-box .plan-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; }
+        .weekly-actual-box {
+            background: var(--surface-sunken); border-radius: 6px; padding: 6px 8px;
+            font-size: 0.78rem; color: var(--text-secondary);
+            border-left: 3px solid var(--primary);
+        }
+        .weekly-actual-box .plan-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: var(--primary); margin-bottom: 2px; }
+        .weekly-rest-label { font-size: 0.78rem; color: var(--text-muted); font-style: italic; }
+        .week-session-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: var(--primary); color: #fff; border-radius: 4px;
+            padding: 2px 6px; font-size: 0.72rem; font-weight: 700; margin-right: 4px;
+        }
+    </style>
 </head>
 <body>
 
 <!-- Theme Toggle -->
-<button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">
+    <i data-lucide="moon"></i>
+</button>
 
 <div class="container">
     <div class="header">
-        <h2>📅 WORKOUT HISTORY</h2>
+        <h2>
+            <i data-lucide="calendar-days" style="width:22px;height:22px;vertical-align:middle;margin-right:6px;"></i>
+            WORKOUT HISTORY
+        </h2>
         <div class="subtitle">Athlete: Jaiprashanth</div>
     </div>
 
-    <a href="/index.html" class="nav-link">⬅️ Back to Dashboard</a>
+    <a href="/index.html" class="nav-link">
+        <i data-lucide="arrow-left" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i>
+        Back to Dashboard
+    </a>
 
-    <div class="import-zone">
-        <label for="fileImporter" class="import-label">📥 Sync Older Logs from Device</label>
-        <input type="file" id="fileImporter" accept=".txt" multiple style="display: none;">
-        <button type="button" class="secondary-btn" onclick="document.getElementById('fileImporter').click()">Select Log Files</button>
-        <span id="importStatus" class="import-status"></span>
+    <!-- View Toggle -->
+    <div class="view-toggle">
+        <button type="button" class="view-toggle-btn active" id="viewMonthBtn">
+            <i data-lucide="calendar" style="width:16px;height:16px;"></i> Month
+        </button>
+        <button type="button" class="view-toggle-btn" id="viewWeekBtn">
+            <i data-lucide="layout-grid" style="width:16px;height:16px;"></i> Week
+        </button>
     </div>
 
+    <!-- Period Navigation (shared) -->
     <div class="calendar-controls">
-        <button type="button" id="prevMonthBtn" class="control-btn">◀</button>
-        <h3 id="calendarMonthTitle">June 2026</h3>
-        <button type="button" id="nextMonthBtn" class="control-btn">▶</button>
+        <button type="button" id="prevPeriodBtn" class="control-btn">
+            <i data-lucide="chevron-left" style="width:16px;height:16px;"></i>
+        </button>
+        <h3 id="calendarMonthTitle">September 2026</h3>
+        <button type="button" id="nextPeriodBtn" class="control-btn">
+            <i data-lucide="chevron-right" style="width:16px;height:16px;"></i>
+        </button>
     </div>
 
-    <div class="calendar-container">
-        <div class="weekdays-grid">
-            <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+    <!-- Month View -->
+    <div id="monthView">
+        <div class="calendar-container">
+            <div class="weekdays-grid">
+                <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+            </div>
+            <div id="calendarDaysGrid" class="days-grid"></div>
         </div>
-        <div id="calendarDaysGrid" class="days-grid"></div>
+    </div>
+
+    <!-- Week View -->
+    <div id="weekView" class="hidden">
+        <div class="weekly-grid" id="weeklyDaysGrid"></div>
     </div>
 
     <div id="inspectorPanel" class="inspector-panel hidden">
@@ -49,13 +113,17 @@
         <div id="inspectorContent"></div>
     </div>
 
-    <button type="button" id="clearHistoryBtn" class="danger-btn hidden">🗑️ Wipe History Cache</button>
+    <button type="button" id="clearHistoryBtn" class="danger-btn hidden">
+        <i data-lucide="trash-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i>
+        Wipe History Cache
+    </button>
 
     <footer class="app-footer">
         <p>© <span id="currentYear"></span> · Developed with ⚡ by <strong>Jaiprashanth</strong></p>
     </footer>
 </div>
 
+<script src="/scripts/lucide.min.js"></script>
 <script src="/scripts/history.js" defer></script>
 <script src="/scripts/sw-register.js" defer></script>
 <script>
@@ -63,14 +131,17 @@
         const t = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', t);
         document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             const btn = document.getElementById('themeToggle');
-            if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
+            if (btn) btn.innerHTML = t === 'dark' ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             btn?.addEventListener('click', () => {
                 const cur = document.documentElement.getAttribute('data-theme');
                 const next = cur === 'dark' ? 'light' : 'dark';
                 document.documentElement.setAttribute('data-theme', next);
                 localStorage.setItem('theme', next);
-                btn.textContent = next === 'dark' ? '☀️' : '🌙';
+                btn.innerHTML = next === 'dark' ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
             });
         });
     })();

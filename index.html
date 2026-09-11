@@ -31,7 +31,7 @@
     <div class="collapsible-section" id="navHubSection">
         <div class="collapsible-header" id="navHubToggle">
             <div class="collapsible-header-left">
-                <span class="collapsible-section-icon">🧭</span>
+                <span class="collapsible-section-icon"><i data-lucide="compass" style="width:18px;height:18px;vertical-align:middle;"></i></span>
                 <span class="collapsible-section-title">Navigation</span>
             </div>
             <span class="collapsible-chevron">▼</span>
@@ -39,19 +39,19 @@
         <div class="collapsible-body">
             <div class="navigation-hub">
                 <a href="/coach.html" class="hub-card">
-                    <span class="hub-icon">🧠</span>
+                    <span class="hub-icon"><i data-lucide="brain" style="width:28px;height:28px;"></i></span>
                     <span class="hub-title">AI Coach</span>
                 </a>
                 <a href="/history.html" class="hub-card">
-                    <span class="hub-icon">📅</span>
+                    <span class="hub-icon"><i data-lucide="calendar-days" style="width:28px;height:28px;"></i></span>
                     <span class="hub-title">Calendar History</span>
                 </a>
                 <a href="/log-workout.html" class="hub-card">
-                    <span class="hub-icon">📝</span>
+                    <span class="hub-icon"><i data-lucide="clipboard-pen" style="width:28px;height:28px;"></i></span>
                     <span class="hub-title">Log Workout</span>
                 </a>
                 <a href="/review.html" class="hub-card">
-                    <span class="hub-icon">📈</span>
+                    <span class="hub-icon"><i data-lucide="chart-line" style="width:28px;height:28px;"></i></span>
                     <span class="hub-title">Performance Review</span>
                 </a>
             </div>
@@ -131,7 +131,7 @@
     <div class="collapsible-section" id="trainingPlanSection" style="margin-top: 20px;">
         <div class="collapsible-header" id="trainingPlanToggle">
             <div class="collapsible-header-left">
-                <span class="collapsible-section-icon">🧠</span>
+                <span class="collapsible-section-icon"><i data-lucide="brain" style="width:18px;height:18px;vertical-align:middle;"></i></span>
                 <span class="collapsible-section-title">Active Training Plan</span>
                 <span class="collapsible-section-badge" id="planStatusBadge">No Plan</span>
             </div>
@@ -161,7 +161,7 @@
             <!-- Empty State -->
             <div id="aiPlanEmptyState">
                 <div class="plan-empty-state">
-                    <span class="plan-empty-icon">🧠</span>
+                    <span class="plan-empty-icon"><i data-lucide="brain" style="width:36px;height:36px;opacity:0.4;"></i></span>
                     <p class="plan-empty-text">No active training plan.<br>Generate one with the AI Coach.</p>
                     <a href="/coach.html" class="plan-empty-link">Open AI Coach →</a>
                 </div>
@@ -188,7 +188,15 @@
     </footer>
 </div>
 
+<script src="/scripts/lucide.min.js"></script>
 <script src="/scripts/dashboard.js" defer></script>
 <script src="/scripts/sw-register.js" defer></script>
+<script>
+    (function() {
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        });
+    })();
+</script>
 </body>
 </html>

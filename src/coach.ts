@@ -80,10 +80,12 @@ function renderLocalPlan(): void {
             <h4>${dayPlan.day} - ${dayPlan.type}</h4>
             <p><strong>Focus:</strong> ${dayPlan.focus}</p>
             <p>${dayPlan.details.replace(/\n/g, '<br>')}</p>
-            <button class="secondary-btn edit-day-btn" data-index="${index}">✏️ Edit with AI</button>
+            <button class="secondary-btn edit-day-btn" data-index="${index}"><i data-lucide="pen-line" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Edit with AI</button>
         `;
         container.appendChild(card);
     });
+
+    if (typeof (window as any).lucide !== 'undefined') (window as any).lucide.createIcons();
 
     document.querySelectorAll('.edit-day-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {

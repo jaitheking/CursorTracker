@@ -15,11 +15,17 @@
 <body>
 
 <!-- Theme Toggle -->
-<button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">
+    <i data-lucide="moon"></i>
+</button>
 
 <div class="container">
-    <a href="/index.html" class="nav-link">⬅️ Back to Dashboard</a>
-    <h2>📝 Log Workout</h2>
+    <a href="/index.html" class="nav-link">
+        <i data-lucide="arrow-left" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Back to Dashboard
+    </a>
+    <h2>
+        <i data-lucide="clipboard-pen" style="width:24px;height:24px;vertical-align:middle;margin-right:6px;"></i> Log Workout
+    </h2>
 
     <div class="panel" style="margin-top: 16px;">
         <label for="activityType">Activity Type</label>
@@ -34,7 +40,7 @@
 
         <!-- File Drop Zone -->
         <div id="dropZone" class="file-drop-zone">
-            <p>📁 Drag &amp; Drop your Coros <strong>.fit</strong> or Strength <strong>.txt</strong> logs here</p>
+            <p><i data-lucide="folder-up" style="width:20px;height:20px;vertical-align:middle;margin-right:4px;"></i> Drag &amp; Drop your Coros <strong>.fit</strong> or Strength <strong>.txt</strong> logs here</p>
             <p><small>or click to browse files from your device</small></p>
             <input type="file" id="corosFileInput" accept=".fit,.txt" multiple style="display: none;">
         </div>
@@ -53,7 +59,9 @@
                     <option value="">-- Select a day --</option>
                 </select>
             </div>
-            <button type="button" id="insertPlanBtn" class="secondary-btn" style="height: 38px; padding: 0 12px; margin-bottom: 12px;">📥 Insert</button>
+            <button type="button" id="insertPlanBtn" class="secondary-btn" style="height: 38px; padding: 0 12px; margin-bottom: 12px;">
+                <i data-lucide="download" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Insert
+            </button>
         </div>
 
         <label for="logDetails">Workout Details / Notes</label>
@@ -68,26 +76,32 @@
             </select>
         </div>
 
-        <button id="saveLogBtn" class="main-btn" style="margin-top: 12px;">💾 Save to Vector DB</button>
+        <button id="saveLogBtn" class="main-btn" style="margin-top: 12px;">
+            <i data-lucide="save" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Save to Vector DB
+        </button>
         <p id="logStatus"></p>
     </div>
 
 </div>
 
+<script src="/scripts/lucide.min.js"></script>
 <script type="module" src="/scripts/logWorkout.js"></script>
 <script>
     (function() {
         const t = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', t);
         document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             const btn = document.getElementById('themeToggle');
-            if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
+            if (btn) btn.innerHTML = t === 'dark' ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             btn?.addEventListener('click', () => {
                 const cur = document.documentElement.getAttribute('data-theme');
                 const next = cur === 'dark' ? 'light' : 'dark';
                 document.documentElement.setAttribute('data-theme', next);
                 localStorage.setItem('theme', next);
-                btn.textContent = next === 'dark' ? '☀️' : '🌙';
+                btn.innerHTML = next === 'dark' ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
             });
         });
     })();

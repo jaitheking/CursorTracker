@@ -9,6 +9,19 @@ interface HistoricLog {
 // Global View-State Boundaries
 let currentDate: Date = new Date();
 let selectedLogId: string | null = null;
+let viewMode: 'month' | 'week' = 'month';
+
+// Week anchor — the Monday of the displayed week
+let currentWeekMonday: Date = getThisWeekMonday(new Date());
+
+function getThisWeekMonday(d: Date): Date {
+    const day = d.getDay(); // 0=Sun
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(d);
+    monday.setDate(diff);
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+}
 
 // Core Initializer Routine
 document.addEventListener('DOMContentLoaded', (): void => {
@@ -18,25 +31,58 @@ document.addEventListener('DOMContentLoaded', (): void => {
     }
 
     initializeCalendarControls();
-    setupFileImporter();
     bindHistoryActions();
     
+    // View mode toggle
+    document.getElementById('viewMonthBtn')?.addEventListener('click', () => {
+        viewMode = 'month';
+        document.getElementById('viewMonthBtn')?.classList.add('active');
+        document.getElementById('viewWeekBtn')?.classList.remove('active');
+        document.getElementById('monthView')?.classList.remove('hidden');
+        document.getElementById('weekView')?.classList.add('hidden');
+        renderView();
+    });
+    document.getElementById('viewWeekBtn')?.addEventListener('click', () => {
+        viewMode = 'week';
+        document.getElementById('viewWeekBtn')?.classList.add('active');
+        document.getElementById('viewMonthBtn')?.classList.remove('active');
+        document.getElementById('weekView')?.classList.remove('hidden');
+        document.getElementById('monthView')?.classList.add('hidden');
+        renderView();
+    });
+
     // Initial draw pass
-    renderCalendarView();
+    renderView();
 });
 
 function initializeCalendarControls(): void {
-    document.getElementById('prevMonthBtn')?.addEventListener('click', (): void => {
-        currentDate.setMonth(currentDate.getMonth() - 1);
-        renderCalendarView();
+    document.getElementById('prevPeriodBtn')?.addEventListener('click', (): void => {
+        if (viewMode === 'month') {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+        } else {
+            currentWeekMonday.setDate(currentWeekMonday.getDate() - 7);
+        }
+        renderView();
         closeInspector();
     });
 
-    document.getElementById('nextMonthBtn')?.addEventListener('click', (): void => {
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        renderCalendarView();
+    document.getElementById('nextPeriodBtn')?.addEventListener('click', (): void => {
+        if (viewMode === 'month') {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+        } else {
+            currentWeekMonday.setDate(currentWeekMonday.getDate() + 7);
+        }
+        renderView();
         closeInspector();
     });
+}
+
+async function renderView(): Promise<void> {
+    if (viewMode === 'month') {
+        await renderCalendarView();
+    } else {
+        await renderWeekView();
+    }
 }
 
 /**
@@ -46,10 +92,7 @@ function initializeCalendarControls(): void {
 async function renderCalendarView(): Promise<void> {
     const daysGrid = document.getElementById('calendarDaysGrid');
     const monthTitle = document.getElementById('calendarMonthTitle');
-    const importStatus = document.getElementById('importStatus');
     if (!daysGrid || !monthTitle) return;
-
-    if (importStatus) importStatus.innerText = "🔄 Syncing with DB...";
 
     const months = [
         "January", "February", "March", "April", "May", "June", 
@@ -87,8 +130,6 @@ async function renderCalendarView(): Promise<void> {
     } catch (err) {
         console.error("Failed to sync from Supabase:", err);
     }
-
-    if (importStatus) importStatus.innerText = "";
 
     daysGrid.innerHTML = '';
 
@@ -153,74 +194,125 @@ async function renderCalendarView(): Promise<void> {
 }
 
 /**
- * High-Performance Ingestion Loop: Processes batch file selections asynchronously,
- * safely cleans up mobile carriage lines, and triggers an immediate UI redraw.
+ * Weekly view: shows Mon–Sun with training plan (if current week) + actual logged sessions.
  */
-function setupFileImporter(): void {
-    const fileImporter = document.getElementById('fileImporter') as HTMLInputElement | null;
-    const statusSpan = document.getElementById('importStatus');
-    if (!fileImporter || !statusSpan) return;
+async function renderWeekView(): Promise<void> {
+    const grid = document.getElementById('weeklyDaysGrid');
+    const monthTitle = document.getElementById('calendarMonthTitle');
+    if (!grid) return;
 
-    fileImporter.addEventListener('change', async (event: Event): Promise<void> => {
-        const target = event.target as HTMLInputElement;
-        const files = target.files;
-        if (!files || files.length === 0) return;
+    // Sync logs
+    const rawHistory = localStorage.getItem('cursor_workout_history');
+    let logs: HistoricLog[] = rawHistory ? JSON.parse(rawHistory) : [];
 
-        const rawHistory = localStorage.getItem('cursor_workout_history');
-        let currentLogs: HistoricLog[] = rawHistory ? JSON.parse(rawHistory) : [];
-        let importedCount = 0;
-
-        const fileReadPromises = Array.from(files).map(async (file: File): Promise<void> => {
-            try {
-                let text = await readFileAsText(file);
-                
-                // Normalizes structure for accurate header tracking
-                const cleanInputText = sanitizeRawLogSummary(text);
-
-                const dateMatch = text.match(/WORKOUT LOG:\s*([0-9\-]+)/i);
-                const typeMatch = cleanInputText.match(/Type:\s*([a-zA-Z\/ ]+)/i);
-
-                if (dateMatch) {
-                    const parsedDate = dateMatch[1].trim();
-                    let parsedType = typeMatch ? typeMatch[1].trim() : 'Gym';
-                    
-                    if (parsedType.toLowerCase().includes('hybrid')) {
-                        parsedType = 'Hybrid';
-                    } else if (parsedType.toLowerCase().includes('run')) {
-                        parsedType = 'Running';
+    try {
+        const response = await fetch('/api/get_logs');
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.logs) {
+                data.logs.forEach((dbLog: any) => {
+                    const existingLogIndex = logs.findIndex(l => l.date === dbLog.activity_date && l.type === dbLog.activity_type);
+                    if (existingLogIndex >= 0) {
+                        logs[existingLogIndex].vectorized = true;
+                        logs[existingLogIndex].summary = dbLog.details;
                     } else {
-                        parsedType = 'Gym';
-                    }
-
-                    // Extracts raw summary lines clean of custom titles
-                    const sanitizedSummary = text.replace(/📊 \*\*WORKOUT LOG: .*\*\n/, '');
-
-                    const isDuplicate = currentLogs.some(log => log.date.trim() === parsedDate && log.type === parsedType);
-
-                    if (!isDuplicate) {
-                        currentLogs.push({
-                            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                            date: parsedDate,
-                            type: parsedType,
-                            summary: sanitizedSummary
+                        logs.push({
+                            id: `db-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                            date: dbLog.activity_date,
+                            type: dbLog.activity_type,
+                            summary: dbLog.details,
+                            vectorized: true
                         });
-                        importedCount++;
                     }
-                }
-            } catch (err) {
-                console.error(`Parsing failure on: ${file.name}`, err);
+                });
+                localStorage.setItem('cursor_workout_history', JSON.stringify(logs));
             }
-        });
+        }
+    } catch (err) {
+        console.error("Failed to sync from Supabase:", err);
+    }
 
-        await Promise.all(fileReadPromises);
-        localStorage.setItem('cursor_workout_history', JSON.stringify(currentLogs));
-        
-        renderCalendarView();
-        statusSpan.innerText = `✅ Successfully synced ${importedCount} new historical logs!`;
-        target.value = ''; 
-        setTimeout(() => { statusSpan.innerText = ''; }, 4000);
-    });
+    // Determine if this week is the current week
+    const thisWeekMonday = getThisWeekMonday(new Date());
+    const isCurrentWeek = currentWeekMonday.toDateString() === thisWeekMonday.toDateString();
+
+    // Load plan only for current week
+    let planDays: any[] = [];
+    if (isCurrentWeek) {
+        const planStr = localStorage.getItem('cursor_weekly_plan');
+        if (planStr) {
+            try { planDays = JSON.parse(planStr); } catch(e) {}
+        }
+    }
+
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    // Build the sunday (end of week)
+    const weekSunday = new Date(currentWeekMonday);
+    weekSunday.setDate(weekSunday.getDate() + 6);
+
+    const formatShort = (d: Date) => {
+        return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+    };
+
+    if (monthTitle) {
+        monthTitle.innerText = `${formatShort(currentWeekMonday)} – ${formatShort(weekSunday)} ${weekSunday.getFullYear()}`;
+    }
+
+    grid.innerHTML = '';
+
+    for (let i = 0; i < 7; i++) {
+        const dayDate = new Date(currentWeekMonday);
+        dayDate.setDate(currentWeekMonday.getDate() + i);
+        dayDate.setHours(0,0,0,0);
+
+        const iso = `${dayDate.getFullYear()}-${String(dayDate.getMonth()+1).padStart(2,'0')}-${String(dayDate.getDate()).padStart(2,'0')}`;
+        const dayWorkouts = logs.filter(l => l.date.trim() === iso);
+        const dayPlan = planDays.find((p: any) => p.day && p.day.toLowerCase().startsWith(dayNames[i].toLowerCase()));
+        const isToday = dayDate.toDateString() === today.toDateString();
+
+        const card = document.createElement('div');
+        card.className = 'weekly-day-card' + (isToday ? ' today-card' : '');
+
+        let planHtml = '';
+        if (isCurrentWeek && dayPlan) {
+            planHtml = `<div class="weekly-plan-box"><div class="plan-label">📋 Plan — ${dayPlan.type || ''}</div>${(dayPlan.details || dayPlan.focus || '').substring(0, 120)}</div>`;
+        }
+
+        let actualHtml = '';
+        if (dayWorkouts.length > 0) {
+            actualHtml = dayWorkouts.map(w => {
+                const icon = w.type === 'Running' ? '🏃‍♂️' : (w.type === 'Hybrid' ? '🏃‍♂️🏋️‍♂️' : '🏋️‍♂️');
+                return `<div class="weekly-actual-box">
+                    <div class="plan-label">✅ Logged</div>
+                    <span class="week-session-chip">${icon} ${w.type}</span>
+                    <span style="font-size:0.72rem;">${(w.summary || '').substring(0, 80)}</span>
+                </div>`;
+            }).join('');
+        } else if (!dayPlan || !isCurrentWeek) {
+            actualHtml = `<div class="weekly-rest-label">No session logged</div>`;
+        }
+
+        card.innerHTML = `
+            <div class="weekly-day-header">
+                <span class="weekly-day-name">${isToday ? '📍 ' : ''}${dayNames[i]}</span>
+                <span class="weekly-day-date">${formatShort(dayDate)}</span>
+            </div>
+            ${planHtml}
+            ${actualHtml}
+        `;
+
+        if (dayWorkouts.length > 0) {
+            card.style.cursor = 'pointer';
+            card.addEventListener('click', () => openInspector(dayWorkouts[0]));
+        }
+
+        grid.appendChild(card);
+    }
 }
+
 
 function readFileAsText(file: File): Promise<string> {
     return new Promise((resolve, reject) => {

@@ -15,11 +15,19 @@
 <body>
 
 <!-- Theme Toggle -->
-<button class="theme-toggle" id="themeToggle" title="Toggle theme">🌙</button>
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">
+    <i data-lucide="moon"></i>
+</button>
 
 <div class="container">
-    <a href="/index.html" class="nav-link">⬅️ Back to Dashboard</a>
-    <h2>🧠 AI Performance Coach</h2>
+    <a href="/index.html" class="nav-link">
+        <i data-lucide="arrow-left" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i>
+        Back to Dashboard
+    </a>
+    <h2>
+        <i data-lucide="brain" style="width:24px;height:24px;vertical-align:middle;margin-right:6px;"></i>
+        AI Performance Coach
+    </h2>
 
     <!-- 1. Weekly Coaching Plan Panel -->
     <div class="panel" style="margin-top: 16px;">
@@ -30,7 +38,9 @@
             <div>
                 <label for="chatModelSelect" style="font-size: 0.8rem; margin-bottom: 4px; display: block;">🤖 AI Chat Model</label>
                 <select id="chatModelSelect" title="Select the generative AI model for coaching plans">
-                    <option value="gemini-3.8-flash" selected>Gemini 3.8 Flash ✨ (Latest / Recommended)</option>
+                    <option value="gemini-2.5-flash">✦ Gemini 2.5 Flash (Fallback)</option>
+                    <option value="gemini-2.5-pro">✦ Gemini 2.5 Pro (Fallback)</option>
+                    <option value="gemini-3.8-flash" selected>Gemini 3.8 Flash ✨ (Recommended)</option>
                     <option value="gemini-3.7-flash">Gemini 3.7 Flash</option>
                     <option value="gemini-3.6-flash">Gemini 3.6 Flash ⚡ (Fast)</option>
                     <option value="gemini-3.1-pro">Gemini 3.1 Pro 🧠 (High Reasoning)</option>
@@ -49,35 +59,44 @@
         <textarea id="coachPrompt" rows="3"
             placeholder="e.g., Focus on speed work this week, or skip leg day."></textarea>
 
-        <button id="generatePlanBtn" class="main-btn">⚡ Generate 7-Day Plan</button>
+        <button id="generatePlanBtn" class="main-btn">
+            <i data-lucide="zap" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i>
+            Generate 7-Day Plan
+        </button>
         <p id="planStatus"></p>
     </div>
 
     <!-- 2. Weekly Output Panel -->
     <div id="coachOutputPanel" class="panel hidden">
-        <h3>📋 Your 7-Day Training Plan</h3>
+        <h3>
+            <i data-lucide="clipboard-list" style="width:20px;height:20px;vertical-align:middle;margin-right:4px;"></i>
+            Your 7-Day Training Plan
+        </h3>
         <div id="weeklyPlanContainer" class="weekly-plan-grid"></div>
     </div>
 </div>
 
+<script src="https://unpkg.com/lucide@latest"></script>
 <script type="module" src="/scripts/coach.js"></script>
 <script>
     (function() {
         const t = localStorage.getItem('theme') || 'dark';
         document.documentElement.setAttribute('data-theme', t);
         document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             const btn = document.getElementById('themeToggle');
-            if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
+            if (btn) btn.innerHTML = t === 'dark' ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
             btn?.addEventListener('click', () => {
                 const cur = document.documentElement.getAttribute('data-theme');
                 const next = cur === 'dark' ? 'light' : 'dark';
                 document.documentElement.setAttribute('data-theme', next);
                 localStorage.setItem('theme', next);
-                btn.textContent = next === 'dark' ? '☀️' : '🌙';
+                btn.innerHTML = next === 'dark' ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
             });
         });
     })();
 </script>
 </body>
-
 </html>

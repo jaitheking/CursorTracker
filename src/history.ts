@@ -154,26 +154,26 @@ async function renderCalendarView(): Promise<void> {
 
         const currentIsoStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const activeWorkouts = logs.filter((log: HistoricLog) => log.date.trim() === currentIsoStr);
+        const dayPlan = getPlanForDate(currentIsoStr);
 
         if (activeWorkouts.length > 0) {
             dayCell.classList.add('has-workout');
             
             const indicators = activeWorkouts.map(w => {
-                let icon = w.type === 'Running' ? '🏃‍♂️' : (w.type === 'Hybrid' ? '🏃‍♂️🏋️‍♂️' : '🏋️‍♂️');
+                let icon = w.type === 'Running' ? '<i data-lucide="footprints" style="width:12px;height:12px;"></i>' : (w.type === 'Hybrid' ? '<i data-lucide="activity" style="width:12px;height:12px;"></i>' : '<i data-lucide="dumbbell" style="width:12px;height:12px;"></i>');
                 if (w.vectorized) {
-                    icon += '✅';
+                    icon += '<i data-lucide="check" style="width:12px;height:12px;color:var(--success);margin-left:2px;"></i>';
                 }
                 return icon;
             }).join('');
             const badge = document.createElement('span');
             badge.className = 'workout-indicator';
-            badge.innerText = indicators;
+            badge.innerHTML = indicators;
             dayCell.appendChild(badge);
-
-            dayCell.addEventListener('click', () => openInspector(activeWorkouts[0]));
-        } else {
-            dayCell.addEventListener('click', closeInspector);
         }
+
+        dayCell.style.cursor = 'pointer';
+        dayCell.addEventListener('click', () => openInspector(currentIsoStr, activeWorkouts, dayPlan));
 
         const today = new Date();
         if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
@@ -284,9 +284,9 @@ async function renderWeekView(): Promise<void> {
         let actualHtml = '';
         if (dayWorkouts.length > 0) {
             actualHtml = dayWorkouts.map(w => {
-                const icon = w.type === 'Running' ? '🏃‍♂️' : (w.type === 'Hybrid' ? '🏃‍♂️🏋️‍♂️' : '🏋️‍♂️');
+                const icon = w.type === 'Running' ? '<i data-lucide="footprints" style="width:14px;height:14px;vertical-align:middle;"></i>' : (w.type === 'Hybrid' ? '<i data-lucide="activity" style="width:14px;height:14px;vertical-align:middle;"></i>' : '<i data-lucide="dumbbell" style="width:14px;height:14px;vertical-align:middle;"></i>');
                 return `<div class="weekly-actual-box">
-                    <div class="plan-label">✅ Logged</div>
+                    <div class="plan-label"><i data-lucide="check" style="width:12px;height:12px;vertical-align:middle;"></i> Logged</div>
                     <span class="week-session-chip">${icon} ${w.type}</span>
                     <span style="font-size:0.72rem;">${(w.summary || '').substring(0, 80)}</span>
                 </div>`;
@@ -304,10 +304,8 @@ async function renderWeekView(): Promise<void> {
             ${actualHtml}
         `;
 
-        if (dayWorkouts.length > 0) {
-            card.style.cursor = 'pointer';
-            card.addEventListener('click', () => openInspector(dayWorkouts[0]));
-        }
+        card.style.cursor = 'pointer';
+        card.addEventListener('click', () => openInspector(iso, dayWorkouts, isCurrentWeek ? dayPlan : null));
 
         grid.appendChild(card);
     }
@@ -323,50 +321,110 @@ function readFileAsText(file: File): Promise<string> {
     });
 }
 
-function openInspector(log: HistoricLog): void {
+function getPlanForDate(isoDateStr: string): any {
+    const planStr = localStorage.getItem('cursor_weekly_plan');
+    if (!planStr) return null;
+    
+    // Check if isoDateStr falls in the current week
+    const targetDate = new Date(isoDateStr);
+    targetDate.setHours(0,0,0,0);
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    
+    const targetMonday = getThisWeekMonday(targetDate);
+    const thisWeekMonday = getThisWeekMonday(today);
+    
+    if (targetMonday.getTime() === thisWeekMonday.getTime()) {
+        try {
+            const planDays = JSON.parse(planStr);
+            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const dayName = dayNames[targetDate.getDay()];
+            return planDays.find((p: any) => p.day && p.day.toLowerCase().startsWith(dayName.toLowerCase()));
+        } catch(e) {}
+    }
+    return null;
+}
+
+function openInspector(dateStr: string, activeWorkouts: HistoricLog[], dayPlan?: any): void {
     const panel = document.getElementById('inspectorPanel');
     const header = document.getElementById('inspectorHeader');
     const content = document.getElementById('inspectorContent');
     if (!panel || !header || !content) return;
 
-    selectedLogId = log.id;
     panel.classList.remove('hidden');
-    header.innerText = `🛠️ Manage Session: ${log.date}`;
+    header.innerHTML = `<i data-lucide="info" style="width:18px;height:18px;vertical-align:middle;margin-right:4px;"></i> Details for ${dateStr}`;
 
-    content.innerHTML = `
-        <label style="font-size:0.8rem; font-weight:700; margin-bottom:4px; display:block;">Workout Type</label>
-        <select id="editLogType" style="margin-bottom: 12px; width: 100%; padding: 8px; background: #333; color: #fff; border: 1px solid #444; border-radius: 4px;">
-            <option value="Running" ${log.type === 'Running' ? 'selected' : ''}>🏃‍♂️ Running</option>
-            <option value="Gym" ${log.type === 'Gym' ? 'selected' : ''}>🏋️‍♂️ Gym / Strength</option>
-            <option value="Hybrid" ${log.type === 'Hybrid' ? 'selected' : ''}>🏃‍♂️🏋️‍♂️ Hybrid</option>
-        </select>
-        <label style="font-size:0.8rem; font-weight:700; margin-bottom:4px; display:block;">Workout Data Template Editor</label>
-        <textarea id="editLogSummary" class="edit-textarea" rows="8">${log.summary}</textarea>
-        <div>
-            <label for="editEmbeddingModelSelect" style="font-size: 0.8rem; font-weight:700; margin-bottom: 4px; display: block;">📐 Vector Embedding Model</label>
-            <select id="editEmbeddingModelSelect" style="margin-bottom: 12px; width: 100%; padding: 8px; background: #333; color: #fff; border: 1px solid #444; border-radius: 4px;">
-                <option value="gemini-embedding-exp-03-07">gemini-embedding-exp-03-07 ✨ (Latest)</option>
-                <option value="gemini-embedding-001">gemini-embedding-001</option>
+    let html = '';
+
+    if (dayPlan) {
+        html += `<div style="background:var(--surface-sunken); padding:12px; border-radius:8px; margin-bottom:12px;">
+            <h4 style="margin-bottom:8px; color:var(--accent);"><i data-lucide="clipboard-list" style="width:16px;height:16px;vertical-align:middle;margin-right:4px;"></i> Plan: ${dayPlan.type}</h4>
+            <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:4px;"><strong>Focus:</strong> ${dayPlan.focus}</p>
+            <p style="font-size:0.85rem; color:var(--text-secondary);">${dayPlan.details}</p>
+        </div>`;
+    }
+
+    if (activeWorkouts.length > 0) {
+        const log = activeWorkouts[0];
+        selectedLogId = log.id;
+        
+        html += `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label style="font-size:0.8rem; font-weight:700;">Workout Data</label>
+                <button type="button" class="secondary-btn" id="copyLogBtn" style="padding:4px 8px; font-size:0.75rem;">
+                    <i data-lucide="copy" style="width:12px;height:12px;margin-right:4px;"></i> Copy Data
+                </button>
+            </div>
+            
+            <textarea id="editLogSummary" class="edit-textarea" rows="12" style="font-family:monospace; white-space:pre;">${log.summary}</textarea>
+            
+            <label style="font-size:0.8rem; font-weight:700; margin-top:12px; margin-bottom:4px; display:block;">Workout Type</label>
+            <select id="editLogType" style="margin-bottom: 12px; width: 100%; padding: 8px; background: #333; color: #fff; border: 1px solid #444; border-radius: 4px;">
+                <option value="Running" ${log.type === 'Running' ? 'selected' : ''}>Running</option>
+                <option value="Gym" ${log.type === 'Gym' ? 'selected' : ''}>Gym / Strength</option>
+                <option value="Hybrid" ${log.type === 'Hybrid' ? 'selected' : ''}>Hybrid</option>
             </select>
-        </div>
-        <div class="inspector-actions">
-            <button type="button" class="inline-save-btn" id="inlineSaveBtn">💾 Update Log</button>
-            <button type="button" class="inline-delete-btn" id="inlineDeleteBtn">🗑️ Delete</button>
-            ${log.vectorized ? `<button type="button" class="inline-save-btn" id="downloadLogBtn" style="background:var(--accent);border-color:var(--accent);color:#fff;">📥 Download Log</button>` : ''}
-        </div>
-        <p id="inspectorStatus" style="font-size: 0.8rem; margin-top: 8px; color: #ff5722;"></p>
-    `;
+            
+            <div class="inspector-actions">
+                <button type="button" class="inline-save-btn" id="inlineSaveBtn">
+                    <i data-lucide="save" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Update Log
+                </button>
+                <button type="button" class="inline-delete-btn" id="inlineDeleteBtn">
+                    <i data-lucide="trash-2" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i> Delete
+                </button>
+            </div>
+            <p id="inspectorStatus" style="font-size: 0.8rem; margin-top: 8px; color: #ff5722;"></p>
+        `;
+    } else {
+        html += `<p style="font-size:0.85rem; color:var(--text-muted); font-style:italic; padding:12px 0;">No active workouts logged for this day.</p>`;
+        selectedLogId = null;
+    }
 
-    document.getElementById('inlineSaveBtn')?.addEventListener('click', () => saveModifiedLog(log));
-    document.getElementById('inlineDeleteBtn')?.addEventListener('click', () => deleteIndividualLog(log));
-    document.getElementById('downloadLogBtn')?.addEventListener('click', () => downloadSupabaseLog(log));
+    content.innerHTML = html;
 
-    const editEmbeddingModelSelect = document.getElementById('editEmbeddingModelSelect') as HTMLSelectElement | null;
-    if (editEmbeddingModelSelect) {
-        const saved = localStorage.getItem('ai_embedding_model');
-        if (saved) editEmbeddingModelSelect.value = saved;
-        editEmbeddingModelSelect.addEventListener('change', () => {
-            localStorage.setItem('ai_embedding_model', editEmbeddingModelSelect.value);
+    if (typeof (window as any).lucide !== 'undefined') {
+        (window as any).lucide.createIcons();
+    }
+
+    if (activeWorkouts.length > 0) {
+        document.getElementById('inlineSaveBtn')?.addEventListener('click', () => saveModifiedLog(activeWorkouts[0]));
+        document.getElementById('inlineDeleteBtn')?.addEventListener('click', () => deleteIndividualLog(activeWorkouts[0]));
+        
+        document.getElementById('copyLogBtn')?.addEventListener('click', () => {
+            const textarea = document.getElementById('editLogSummary') as HTMLTextAreaElement;
+            if (textarea) {
+                navigator.clipboard.writeText(textarea.value).then(() => {
+                    const btn = document.getElementById('copyLogBtn');
+                    if (btn) {
+                        btn.innerHTML = `<i data-lucide="check" style="width:12px;height:12px;margin-right:4px;"></i> Copied!`;
+                        if (typeof (window as any).lucide !== 'undefined') (window as any).lucide.createIcons();
+                        setTimeout(() => {
+                            btn.innerHTML = `<i data-lucide="copy" style="width:12px;height:12px;margin-right:4px;"></i> Copy Data`;
+                            if (typeof (window as any).lucide !== 'undefined') (window as any).lucide.createIcons();
+                        }, 2000);
+                    }
+                });
+            }
         });
     }
 }

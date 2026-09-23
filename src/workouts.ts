@@ -2,7 +2,8 @@
 declare const lucide: any;
 
 
-interface WorkoutBlock {
+// Interfaces for the BUILDER (flat list created in the UI)
+interface BuilderBlock {
     type: 'exercise' | 'rest';
     name?: string;
     equipment?: string;
@@ -13,13 +14,42 @@ interface WorkoutBlock {
     duration?: string;
 }
 
+// Interfaces for CATALOG data (actual Supabase schema)
+interface CatalogExercise {
+    exercise_name: string;
+    load_type: string;
+    load_kg: number | null;
+    sets: number;
+    reps: number;
+    reps_unit: string;
+    rir: number | null;
+    notes?: string;
+}
+
+interface CatalogBlock {
+    name: string;
+    rounds: number;
+    exercises: CatalogExercise[];
+}
+
+interface CatalogWorkoutData {
+    blocks: CatalogBlock[];
+    rounds?: number;
+    version?: number;
+    category?: string;
+    session_type?: string;
+    rest_between_rounds_seconds?: number;
+    source_session?: string;
+}
+
 interface Workout {
     id: string;
     name: string;
     description: string;
     label: string;
-    workout_data: WorkoutBlock[];
+    workout_data: CatalogWorkoutData;
 }
+
 
 document.addEventListener('DOMContentLoaded', () => {
     // UI Elements
@@ -41,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const workoutList = document.getElementById('workoutList') as HTMLDivElement;
 
-    let blocksData: WorkoutBlock[] = [];
+    let blocksData: BuilderBlock[] = [];
 
     // Tabs
     tabBuilder?.addEventListener('click', () => {
@@ -88,8 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTimeline();
     }
 
-    function gatherWorkoutData(): WorkoutBlock[] {
-        const data: WorkoutBlock[] = [];
+    function gatherWorkoutData(): BuilderBlock[] {
+        const data: BuilderBlock[] = [];
         const blocks = blockList?.querySelectorAll('.workout-block');
         blocks?.forEach(block => {
             const blockEl = block as HTMLDivElement;
@@ -147,14 +177,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function formatWorkoutToText(name: string, desc: string, blocks: WorkoutBlock[]): string {
+    // Format the BUILDER's flat block list into copyable text
+    function formatBuilderBlocksToText(name: string, desc: string, blocks: BuilderBlock[]): string {
         let text = `${name}\n`;
         if (desc) text += `${desc}\n`;
         text += `\n`;
-        
         blocks.forEach(b => {
             if (b.type === 'exercise') {
-                let details: string[] = [];
+                const details: string[] = [];
                 if (b.load) details.push(`@ ${b.load}`);
                 if (b.sets && b.reps) details.push(`${b.sets} sets x ${b.reps} reps`);
                 if (b.rir) details.push(`(RIR: ${b.rir})`);
@@ -166,8 +196,38 @@ document.addEventListener('DOMContentLoaded', () => {
         return text;
     }
 
+    // Format a CATALOG workout (blocks → exercises nested schema) into copyable text
+    function formatCatalogWorkoutToText(w: Workout): string {
+        let text = `${w.name}\n`;
+        if (w.description) text += `${w.description}\n`;
+        text += `\n`;
+        const wd = w.workout_data;
+        if (wd.session_type) text += `Type: ${wd.session_type}\n`;
+        if (wd.rest_between_rounds_seconds) text += `Rest between rounds: ${wd.rest_between_rounds_seconds}s\n`;
+        text += `\n`;
+        const blocks = wd.blocks ?? [];
+        blocks.forEach(block => {
+            text += `── ${block.name} (${block.rounds} round${block.rounds !== 1 ? 's' : ''}) ──\n`;
+            block.exercises.forEach(ex => {
+                const load = ex.load_kg ? `${ex.load_kg}kg ${ex.load_type}` : ex.load_type;
+                const repsStr = ex.reps_unit === 'seconds'
+                    ? `${ex.reps}s hold`
+                    : ex.reps_unit === 'reps_per_side'
+                    ? `${ex.reps} reps/side`
+                    : ex.reps_unit === 'reps_per_direction'
+                    ? `${ex.reps} reps/dir`
+                    : `${ex.reps} reps`;
+                const rirStr = ex.rir !== null && ex.rir !== undefined ? ` | RIR: ${ex.rir}` : '';
+                const notesStr = ex.notes ? ` (${ex.notes})` : '';
+                text += `  - ${ex.exercise_name} | ${load} | ${ex.sets} sets × ${repsStr}${rirStr}${notesStr}\n`;
+            });
+            text += `\n`;
+        });
+        return text;
+    }
+
     copyPreviewBtn?.addEventListener('click', async () => {
-        const text = formatWorkoutToText(workoutName.value || 'Custom Workout', workoutDesc.value, gatherWorkoutData());
+        const text = formatBuilderBlocksToText(workoutName.value || 'Custom Workout', workoutDesc.value, gatherWorkoutData());
         try {
             await navigator.clipboard.writeText(text);
             const orig = copyPreviewBtn.innerHTML;
@@ -297,7 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         workoutList.innerHTML = workouts.map(w => {
-            const rawText = formatWorkoutToText(w.name, w.description, w.workout_data);
+            const rawText = formatCatalogWorkoutToText(w);
             const escapedText = rawText.replace(/"/g, '&quot;');
             
             return `

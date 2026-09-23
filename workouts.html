@@ -115,6 +115,41 @@
             gap: 8px;
             margin-top: 12px;
         }
+        .catalog-timeline {
+            border-left: 2px solid var(--border-color);
+            padding-left: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 4px;
+        }
+        .ct-section-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding-bottom: 4px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .ct-rounds-badge {
+            background: rgba(255,87,34,0.12);
+            color: var(--primary-color);
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+        .ct-notes {
+            font-style: italic;
+            color: var(--text-muted);
+        }
+        .catalog-timeline .timeline-item {
+            padding-left: 0;
+        }
     </style>
 </head>
 <body>
@@ -142,7 +177,7 @@
     <!-- BUILDER PANEL -->
     <div id="builderPanel" class="panel builder-layout">
         <div class="builder-form-section">
-            <h3>Create Workout</h3>
+            <h3 id="builderTitle">Create Workout</h3>
             
             <div style="margin-bottom: 12px;">
                 <label for="workoutName">Workout Name</label>
@@ -171,9 +206,14 @@
                 </button>
             </div>
 
-            <button type="button" id="saveWorkoutBtn" class="main-btn">
-                <i data-lucide="save" style="width:16px;height:16px;vertical-align:middle;"></i> Save to Catalog
-            </button>
+            <div style="display: flex; gap: 8px; margin-top: 16px;">
+                <button type="button" id="saveWorkoutBtn" class="main-btn" style="flex: 1;">
+                    <i data-lucide="save" style="width:16px;height:16px;vertical-align:middle;"></i> Save to Catalog
+                </button>
+                <button type="button" id="cancelEditBtn" class="main-btn hidden" style="background-color: var(--surface-color); border: 1px solid var(--border-color); color: var(--text-color);">
+                    Cancel
+                </button>
+            </div>
         </div>
 
         <div class="builder-preview-section">

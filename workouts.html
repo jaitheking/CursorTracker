@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Builder & Catalog — Jaiprashanth</title>
+    <meta name="description" content="Build structured workouts and save them to your catalog for easy tracking.">
+
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#ff5722">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .builder-layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+        @media (min-width: 768px) {
+            .builder-layout {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .block-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .workout-block {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+        .block-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+        .remove-block-btn {
+            background: none;
+            border: none;
+            color: var(--error-color, #ff4444);
+            cursor: pointer;
+            padding: 4px;
+        }
+        .block-row {
+            display: flex;
+            gap: 8px;
+        }
+        .block-row > div {
+            flex: 1;
+        }
+        .add-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .timeline-graph {
+            border-left: 2px solid var(--primary-color);
+            padding-left: 16px;
+            margin-top: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .timeline-item {
+            position: relative;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -21px;
+            top: 4px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+        }
+        .timeline-item.rest::before {
+            background-color: var(--text-muted);
+        }
+        .workout-card {
+            background-color: var(--surface-color);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .workout-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .workout-card-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .workout-card-label {
+            font-size: 0.8rem;
+            color: var(--primary-color);
+            background-color: rgba(255, 87, 34, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .workout-card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Theme Toggle -->
+<button class="theme-toggle" id="themeToggle" title="Toggle theme">
+    <i data-lucide="moon"></i>
+</button>
+
+<div class="container">
+    <a href="/index.html" class="nav-link">
+        <i data-lucide="arrow-left" style="width:14px;height:14px;vertical-align:middle;margin-right:4px;"></i>
+        Back to Dashboard
+    </a>
+    <h2>
+        <i data-lucide="dumbbell" style="width:24px;height:24px;vertical-align:middle;margin-right:6px;"></i>
+        Workout Builder & Catalog
+    </h2>
+
+    <div class="segment-tabs" style="margin-bottom: 16px;">
+        <button type="button" class="tab-btn active" id="tabBuilder"><i data-lucide="hammer"></i> Builder</button>
+        <button type="button" class="tab-btn" id="tabCatalog"><i data-lucide="library"></i> Catalog</button>
+    </div>
+
+    <!-- BUILDER PANEL -->
+    <div id="builderPanel" class="panel builder-layout">
+        <div class="builder-form-section">
+            <h3>Create Workout</h3>
+            
+            <div style="margin-bottom: 12px;">
+                <label for="workoutName">Workout Name</label>
+                <input type="text" id="workoutName" placeholder="e.g. Kettlebell Power Circuit">
+            </div>
+            
+            <div style="margin-bottom: 12px;">
+                <label for="workoutDesc">Description (Optional)</label>
+                <textarea id="workoutDesc" rows="2" placeholder="Focus on explosiveness..."></textarea>
+            </div>
+            
+            <div style="margin-bottom: 16px;">
+                <label for="workoutLabel">Label / Category</label>
+                <input type="text" id="workoutLabel" placeholder="e.g. Strength, KB, Recovery">
+            </div>
+
+            <h4>Workout Blocks</h4>
+            <div id="blockList" class="block-list"></div>
+
+            <div class="add-buttons">
+                <button type="button" id="addExerciseBtn" class="main-btn" style="flex:1; background-color: var(--surface-color); border: 1px solid var(--border-color);">
+                    <i data-lucide="plus" style="width:16px;height:16px;vertical-align:middle;"></i> Exercise
+                </button>
+                <button type="button" id="addRestBtn" class="main-btn" style="flex:1; background-color: var(--surface-color); border: 1px solid var(--border-color);">
+                    <i data-lucide="timer" style="width:16px;height:16px;vertical-align:middle;"></i> Rest
+                </button>
+            </div>
+
+            <button type="button" id="saveWorkoutBtn" class="main-btn">
+                <i data-lucide="save" style="width:16px;height:16px;vertical-align:middle;"></i> Save to Catalog
+            </button>
+        </div>
+
+        <div class="builder-preview-section">
+            <h3>Timeline Preview</h3>
+            <div id="timelineGraph" class="timeline-graph">
+                <!-- Timeline items injected here -->
+                <div class="text-muted" style="font-size: 0.9rem;">Add blocks to see timeline...</div>
+            </div>
+            <div style="margin-top: 16px;">
+                <button type="button" id="copyPreviewBtn" class="main-btn" style="background-color: var(--surface-color); border: 1px solid var(--border-color);">
+                    <i data-lucide="copy" style="width:16px;height:16px;vertical-align:middle;"></i> Copy Text for Logging
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CATALOG PANEL -->
+    <div id="catalogPanel" class="panel hidden">
+        <h3>Saved Workouts</h3>
+        <div id="workoutList">
+            <p>Loading catalog...</p>
+        </div>
+    </div>
+
+</div>
+
+<!-- Templates for Builder Blocks -->
+<template id="exerciseBlockTemplate">
+    <div class="workout-block exercise-block">
+        <div class="block-header">
+            <span>Exercise</span>
+            <button class="remove-block-btn"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
+        </div>
+        <div>
+            <input type="text" class="ex-name" placeholder="Exercise Name (e.g. KB Swing)">
+        </div>
+        <div class="block-row">
+            <div>
+                <select class="ex-equip">
+                    <option value="single">Single KB</option>
+                    <option value="pair">Pair KB</option>
+                    <option value="bodyweight">Bodyweight</option>
+                    <option value="barbell">Barbell</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div>
+                <input type="text" class="ex-load" placeholder="Load (e.g. 24kg)">
+            </div>
+        </div>
+        <div class="block-row">
+            <div>
+                <input type="number" class="ex-sets" placeholder="Sets" min="1">
+            </div>
+            <div>
+                <input type="number" class="ex-reps" placeholder="Reps" min="1">
+            </div>
+            <div>
+                <input type="number" class="ex-rir" placeholder="RIR" min="0" max="10">
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="restBlockTemplate">
+    <div class="workout-block rest-block">
+        <div class="block-header">
+            <span>Rest Period</span>
+            <button class="remove-block-btn"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
+        </div>
+        <div>
+            <input type="text" class="rest-duration" placeholder="Duration (e.g. 90s, 2m)">
+        </div>
+    </div>
+</template>
+
+<script src="https://unpkg.com/lucide@latest"></script>
+<script type="module" src="/scripts/workouts.js"></script>
+<script>
+    (function() {
+        const t = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            const btn = document.getElementById('themeToggle');
+            if (btn) btn.innerHTML = t === 'dark' ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>';
+            btn?.addEventListener('click', () => {
+                const cur = document.documentElement.getAttribute('data-theme');
+                const next = cur === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                btn.innerHTML = next === 'dark' ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            });
+        });
+    })();
+</script>
+</body>
+</html>
